@@ -41,19 +41,17 @@ private enum CFEnc {
     static let dosNordic:   CFStringEncoding = 0x041A  // kCFStringEncodingDOSNordic (IBM865 / cp865)
 
     // CJK
-    static let big5:    CFStringEncoding = 0x0A03  // kCFStringEncodingBig5
-    static let gb2312:  CFStringEncoding = 0x0930  // kCFStringEncodingDOSChineseSimplif (GB 2312)
-    static let gbk:     CFStringEncoding = 0x0631  // kCFStringEncodingGBK_95 (GBK)
-    static let gb18030: CFStringEncoding = 0x0632  // kCFStringEncodingGB_18030_2000
-    static let eucTW:   CFStringEncoding = 0x0931  // kCFStringEncodingEUC_TW
-    static let eucKR:   CFStringEncoding = 0x0940  // kCFStringEncodingEUC_KR
-
+    static let big5:    CFStringEncoding = 0x0A03       // kCFStringEncodingBig5
+    static let gb2312:  CFStringEncoding = 0x0930       // kCFStringEncodingDOSChineseSimplif (GB 2312)
+    static let gbk:     CFStringEncoding = 0x80000631   // kCFStringEncodingGBK_95 (GBK)
+    static let gb18030: CFStringEncoding = 0x80000632   // kCFStringEncodingGB_18030_2000
+    static let eucTW:   CFStringEncoding = 0x0931       // kCFStringEncodingEUC_TW
+    static let eucKR:   CFStringEncoding = 0x0940       // kCFStringEncodingEUC_KR
     // ISO-2022
     static let iso2022JP: CFStringEncoding = 0x0820
     static let iso2022KR: CFStringEncoding = 0x0840
     static let iso2022CN: CFStringEncoding = 0x0830  // kCFStringEncodingISO_2022_CN
 
-    // KOI8
     // KOI8
     static let koi8R: CFStringEncoding = 0x0A02  // kCFStringEncodingKOI8_R
     static let koi8U: CFStringEncoding = 0x0A08  // kCFStringEncodingKOI8_U (Ukrainian)

@@ -1,0 +1,82 @@
+# ===========================
+# macOS
+# ===========================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ===========================
+# Swift Package Manager
+# ===========================
+.build/
+.swiftpm/
+*.resolved
+
+# ===========================
+# Xcode
+# ===========================
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+*.xccheckout
+*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ===========================
+# CMake 构建目录
+# ===========================
+build/
+build-*/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+install_manifest.txt
+CTestTestfile.cmake
+_CPack_Packages/
+*.cmake
+!uchardet-config.cmake.in
+!src/symbols.cmake
+
+# ===========================
+# 编译输出 / 构建产物
+# ===========================
+output/
+*.o
+*.a
+*.so
+*.dylib
+*.framework
+*.xcframework
+
+# ===========================
+# 测试相关（忽略测试文件及测试结果）
+# ===========================
+Tests/
+test/
+TestResults/
+*.xcresult
+*.junit.xml
+
+# ===========================
+# 编辑器 / IDE
+# ===========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ===========================
+# 日志 / 临时文件
+# ===========================
+*.log
+*.tmp
+*.temp

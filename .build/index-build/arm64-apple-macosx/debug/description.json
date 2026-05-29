@@ -1,9 +1,9 @@
 {
   "builtTestProducts" : [
     {
-      "binaryPath" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/uchardetPackageTests.xctest/Contents/MacOS/uchardetPackageTests",
+      "binaryPath" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.xctest/Contents/MacOS/UchardetPackageTests",
       "packagePath" : "/Users/okferret/Developer/Projects/Uchardet",
-      "productName" : "uchardetPackageTests"
+      "productName" : "UchardetPackageTests"
     }
   ],
   "copyCommands" : {
@@ -133,6 +133,122 @@
       "tempsPath" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Uchardet.build",
       "wholeModuleOptimization" : false
     },
+    "C.UchardetPackageTests-arm64-apple-macosx16.0-debug.module" : {
+      "executable" : "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.build/sources",
+      "importPath" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.derived/runner.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/swift-version--1B42218996668D90.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Modules/UchardetTests.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/libuchardet.a"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "UchardetPackageTests",
+      "moduleOutputPath" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Modules/UchardetPackageTests.swiftmodule",
+      "objects" : [
+        "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.build/runner.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx10.15",
+        "-enable-batch-mode",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-I",
+        "/Users/okferret/Developer/Projects/Uchardet/output/uchardet.xcframework/macos-arm64_x86_64/Headers",
+        "-Xcc",
+        "-I",
+        "-Xcc",
+        "/Users/okferret/Developer/Projects/Uchardet/output/uchardet.xcframework/macos-arm64_x86_64/Headers",
+        "-module-cache-path",
+        "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-F",
+        "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.build/UchardetPackageTests-Swift.h",
+        "-Xfrontend",
+        "-experimental-lazy-typecheck",
+        "-Xfrontend",
+        "-experimental-skip-all-function-bodies",
+        "-Xfrontend",
+        "-experimental-allow-module-with-compiler-errors",
+        "-Xfrontend",
+        "-empty-abi-descriptor",
+        "-I",
+        "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/lib/swift/macosx/testing",
+        "-L",
+        "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/lib/swift/macosx/testing",
+        "-plugin-path",
+        "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "uchardet"
+      ],
+      "outputFileMapPath" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Modules/UchardetPackageTests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : true,
+      "sources" : [
+        "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.derived/runner.swift"
+      ],
+      "tempsPath" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.build",
+      "wholeModuleOptimization" : false
+    },
     "C.UchardetTests-arm64-apple-macosx16.0-debug.module" : {
       "executable" : "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/bin/swiftc",
       "fileList" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetTests.build/sources",
@@ -247,122 +363,6 @@
       ],
       "tempsPath" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetTests.build",
       "wholeModuleOptimization" : false
-    },
-    "C.uchardetPackageTests-arm64-apple-macosx16.0-debug.module" : {
-      "executable" : "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/bin/swiftc",
-      "fileList" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/uchardetPackageTests.build/sources",
-      "importPath" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Modules",
-      "inputs" : [
-        {
-          "kind" : "file",
-          "name" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/uchardetPackageTests.derived/runner.swift"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/swift-version--1B42218996668D90.txt"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Modules/UchardetTests.swiftmodule"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/libuchardet.a"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/uchardetPackageTests.build/sources"
-        }
-      ],
-      "isLibrary" : true,
-      "moduleName" : "uchardetPackageTests",
-      "moduleOutputPath" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Modules/uchardetPackageTests.swiftmodule",
-      "objects" : [
-        "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/uchardetPackageTests.build/runner.swift.o"
-      ],
-      "otherArguments" : [
-        "-target",
-        "arm64-apple-macosx10.15",
-        "-enable-batch-mode",
-        "-Onone",
-        "-enable-testing",
-        "-Xfrontend",
-        "-enable-cross-import-overlays",
-        "-j10",
-        "-DSWIFT_PACKAGE",
-        "-DDEBUG",
-        "-I",
-        "/Users/okferret/Developer/Projects/Uchardet/output/uchardet.xcframework/macos-arm64_x86_64/Headers",
-        "-Xcc",
-        "-I",
-        "-Xcc",
-        "/Users/okferret/Developer/Projects/Uchardet/output/uchardet.xcframework/macos-arm64_x86_64/Headers",
-        "-module-cache-path",
-        "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/ModuleCache",
-        "-parseable-output",
-        "-parse-as-library",
-        "-F",
-        "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug",
-        "-emit-objc-header",
-        "-emit-objc-header-path",
-        "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/uchardetPackageTests.build/uchardetPackageTests-Swift.h",
-        "-Xfrontend",
-        "-experimental-lazy-typecheck",
-        "-Xfrontend",
-        "-experimental-skip-all-function-bodies",
-        "-Xfrontend",
-        "-experimental-allow-module-with-compiler-errors",
-        "-Xfrontend",
-        "-empty-abi-descriptor",
-        "-I",
-        "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/lib/swift/macosx/testing",
-        "-L",
-        "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/lib/swift/macosx/testing",
-        "-plugin-path",
-        "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/lib/swift/host/plugins/testing",
-        "-sdk",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
-        "-F",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
-        "-F",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
-        "-I",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
-        "-L",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
-        "-g",
-        "-Xcc",
-        "-isysroot",
-        "-Xcc",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
-        "-Xcc",
-        "-F",
-        "-Xcc",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
-        "-Xcc",
-        "-F",
-        "-Xcc",
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
-        "-Xcc",
-        "-fPIC",
-        "-Xcc",
-        "-g",
-        "-package-name",
-        "uchardet"
-      ],
-      "outputFileMapPath" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/uchardetPackageTests.build/output-file-map.json",
-      "outputs" : [
-        {
-          "kind" : "file",
-          "name" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Modules/uchardetPackageTests.swiftmodule"
-        }
-      ],
-      "prepareForIndexing" : true,
-      "sources" : [
-        "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/uchardetPackageTests.derived/runner.swift"
-      ],
-      "tempsPath" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/uchardetPackageTests.build",
-      "wholeModuleOptimization" : false
     }
   },
   "swiftFrontendCommands" : {
@@ -405,6 +405,88 @@
       "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Uchardet.build/Uchardet-Swift.h",
       "-swift-version",
       "5",
+      "-Xfrontend",
+      "-experimental-lazy-typecheck",
+      "-Xfrontend",
+      "-experimental-skip-all-function-bodies",
+      "-Xfrontend",
+      "-experimental-allow-module-with-compiler-errors",
+      "-Xfrontend",
+      "-empty-abi-descriptor",
+      "-I",
+      "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/lib/swift/macosx/testing",
+      "-L",
+      "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/lib/swift/macosx/testing",
+      "-plugin-path",
+      "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "uchardet",
+      "-driver-use-frontend-path",
+      "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/bin/swiftc"
+    ],
+    "UchardetPackageTests" : [
+      "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "UchardetPackageTests",
+      "-package-name",
+      "uchardet",
+      "-incremental",
+      "-c",
+      "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.derived/runner.swift",
+      "-I",
+      "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx10.15",
+      "-enable-batch-mode",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-I",
+      "/Users/okferret/Developer/Projects/Uchardet/output/uchardet.xcframework/macos-arm64_x86_64/Headers",
+      "-Xcc",
+      "-I",
+      "-Xcc",
+      "/Users/okferret/Developer/Projects/Uchardet/output/uchardet.xcframework/macos-arm64_x86_64/Headers",
+      "-module-cache-path",
+      "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-F",
+      "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.build/UchardetPackageTests-Swift.h",
       "-Xfrontend",
       "-experimental-lazy-typecheck",
       "-Xfrontend",
@@ -531,100 +613,18 @@
       "uchardet",
       "-driver-use-frontend-path",
       "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/bin/swiftc"
-    ],
-    "uchardetPackageTests" : [
-      "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/bin/swiftc",
-      "-module-name",
-      "uchardetPackageTests",
-      "-package-name",
-      "uchardet",
-      "-incremental",
-      "-c",
-      "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/uchardetPackageTests.derived/runner.swift",
-      "-I",
-      "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Modules",
-      "-target",
-      "arm64-apple-macosx10.15",
-      "-enable-batch-mode",
-      "-Onone",
-      "-enable-testing",
-      "-Xfrontend",
-      "-enable-cross-import-overlays",
-      "-j10",
-      "-DSWIFT_PACKAGE",
-      "-DDEBUG",
-      "-I",
-      "/Users/okferret/Developer/Projects/Uchardet/output/uchardet.xcframework/macos-arm64_x86_64/Headers",
-      "-Xcc",
-      "-I",
-      "-Xcc",
-      "/Users/okferret/Developer/Projects/Uchardet/output/uchardet.xcframework/macos-arm64_x86_64/Headers",
-      "-module-cache-path",
-      "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/ModuleCache",
-      "-parseable-output",
-      "-parse-as-library",
-      "-F",
-      "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug",
-      "-emit-objc-header",
-      "-emit-objc-header-path",
-      "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/uchardetPackageTests.build/uchardetPackageTests-Swift.h",
-      "-Xfrontend",
-      "-experimental-lazy-typecheck",
-      "-Xfrontend",
-      "-experimental-skip-all-function-bodies",
-      "-Xfrontend",
-      "-experimental-allow-module-with-compiler-errors",
-      "-Xfrontend",
-      "-empty-abi-descriptor",
-      "-I",
-      "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/lib/swift/macosx/testing",
-      "-L",
-      "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/lib/swift/macosx/testing",
-      "-plugin-path",
-      "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/lib/swift/host/plugins/testing",
-      "-sdk",
-      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
-      "-F",
-      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
-      "-F",
-      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
-      "-I",
-      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
-      "-L",
-      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
-      "-g",
-      "-Xcc",
-      "-isysroot",
-      "-Xcc",
-      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
-      "-Xcc",
-      "-F",
-      "-Xcc",
-      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
-      "-Xcc",
-      "-F",
-      "-Xcc",
-      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
-      "-Xcc",
-      "-fPIC",
-      "-Xcc",
-      "-g",
-      "-package-name",
-      "uchardet",
-      "-driver-use-frontend-path",
-      "/Users/okferret/Library/Developer/Toolchains/swift-6.1.3-RELEASE.xctoolchain/usr/bin/swiftc"
     ]
   },
   "targetDependencyMap" : {
     "Uchardet" : [
       "uchardet"
     ],
-    "UchardetTests" : [
+    "UchardetPackageTests" : [
+      "UchardetTests",
       "Uchardet",
       "uchardet"
     ],
-    "uchardetPackageTests" : [
-      "UchardetTests",
+    "UchardetTests" : [
       "Uchardet",
       "uchardet"
     ]
@@ -653,6 +653,20 @@
       ],
       "outputFilePath" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Uchardet.build/sources"
     },
+    "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.derived/runner.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.build/sources"
+    },
     "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetTests.build/sources" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
@@ -680,20 +694,6 @@
         }
       ],
       "outputFilePath" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/swift-version--1B42218996668D90.txt"
-    },
-    "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/uchardetPackageTests.build/sources" : {
-      "alwaysOutOfDate" : false,
-      "inputs" : [
-        {
-          "kind" : "virtual",
-          "name" : "<sources-file-list>"
-        },
-        {
-          "kind" : "file",
-          "name" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/uchardetPackageTests.derived/runner.swift"
-        }
-      ],
-      "outputFilePath" : "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/uchardetPackageTests.build/sources"
     }
   }
 }

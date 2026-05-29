@@ -1,0 +1,27 @@
+{
+  "object" : {
+    "artifacts" : [
+      {
+        "kind" : "xcframework",
+        "packageRef" : {
+          "identity" : "uchardet",
+          "kind" : "root",
+          "location" : "/Users/okferret/Developer/Projects/Uchardet",
+          "name" : "Uchardet"
+        },
+        "path" : "/Users/okferret/Developer/Projects/Uchardet/output/uchardet.xcframework",
+        "source" : {
+          "type" : "local"
+        },
+        "targetName" : "uchardet"
+      }
+    ],
+    "dependencies" : [
+
+    ],
+    "prebuilts" : [
+
+    ]
+  },
+  "version" : 7
+}

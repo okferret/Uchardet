@@ -1,0 +1,4 @@
+module Uchardet {
+    header "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Uchardet.build/Uchardet-Swift.h"
+    requires objc
+}

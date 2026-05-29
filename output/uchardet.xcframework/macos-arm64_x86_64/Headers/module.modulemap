@@ -1,0 +1,14 @@
+//
+// module.modulemap
+// 自动生成 —— 请勿手动修改
+//
+// Clang 模块映射文件，使 Swift 和 Objective-C 代码可以通过
+//   import uchardet
+// 直接使用 uchardet 库的 C API。
+//
+module uchardet {
+    umbrella header "uchardet/uchardet-umbrella.h"
+
+    export *
+    module * { export * }
+}

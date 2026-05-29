@@ -1,0 +1,11 @@
+{
+  "": {
+    "swift-dependencies": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetTests.build/master.swiftdeps"
+  },
+  "/Users/okferret/Developer/Projects/Uchardet/Tests/UchardetTests/UchardetTests.swift": {
+    "dependencies": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetTests.build/UchardetTests.d",
+    "object": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetTests.build/UchardetTests.swift.o",
+    "swiftmodule": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetTests.build/UchardetTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetTests.build/UchardetTests.swiftdeps"
+  }
+}

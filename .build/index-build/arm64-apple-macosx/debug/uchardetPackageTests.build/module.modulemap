@@ -1,0 +1,4 @@
+module UchardetPackageTests {
+    header "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.build/UchardetPackageTests-Swift.h"
+    requires objc
+}

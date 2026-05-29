@@ -1,0 +1,11 @@
+{
+  "": {
+    "swift-dependencies": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.build/master.swiftdeps"
+  },
+  "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.derived/runner.swift": {
+    "dependencies": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.build/runner.d",
+    "object": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/UchardetPackageTests.build/runner.swiftdeps"
+  }
+}

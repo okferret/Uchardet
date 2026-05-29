@@ -380,6 +380,18 @@ public final class Uchardet: @unchecked Sendable {
         return String.Encoding(charsetName: name)
     }
 
+    /// 获取检测到的字符集对应的 `String.Encoding`，检测失败时使用回退编码
+    ///
+    /// uchardet 对数据量不足或字符分布单一的内容可能产生误判。
+    /// 当调用方已知数据的可能编码范围时，可通过 `fallback` 提供兜底值，
+    /// 仅在检测结果为 `nil` 时生效，不会覆盖成功的检测结果。
+    ///
+    /// - Parameter fallback: 检测失败时返回的回退编码
+    /// - Returns: 检测到的 `String.Encoding`，检测失败时返回 `fallback`
+    public func encoding(fallback: String.Encoding) -> String.Encoding {
+        return encoding ?? fallback
+    }
+
     // MARK: - 静态便捷方法（Data）
 
     /// 一次性检测数据的字符集名称
@@ -420,12 +432,36 @@ public final class Uchardet: @unchecked Sendable {
         return detector.encoding
     }
 
+    /// 一次性检测数据的 `String.Encoding`，检测失败时使用回退编码
+    ///
+    /// uchardet 对数据量不足或字符分布单一的内容可能产生误判。
+    /// 当调用方已知数据的可能编码范围时，可通过 `fallback` 提供兜底值，
+    /// 仅在检测结果为 `nil` 时生效，不会覆盖成功的检测结果。
+    ///
+    /// - Parameters:
+    ///   - data: 待检测的原始字节数据
+    ///   - fallback: 检测失败时返回的回退编码
+    /// - Returns: 检测到的 `String.Encoding`，失败时返回 `fallback`
+    public static func detectEncoding(_ data: Data, fallback: String.Encoding) -> String.Encoding {
+        return detectEncoding(data) ?? fallback
+    }
+
     /// 一次性检测字符串（UTF-8 编码）的 `String.Encoding`
     /// - Parameter string: 待检测的字符串
     /// - Returns: 检测到的 `String.Encoding`，失败或无法映射时返回 `nil`
     public static func detectEncoding(_ string: String) -> String.Encoding? {
         guard let data = string.data(using: .utf8) else { return nil }
         return detectEncoding(data)
+    }
+
+    /// 一次性检测字符串（UTF-8 编码）的 `String.Encoding`，检测失败时使用回退编码
+    ///
+    /// - Parameters:
+    ///   - string: 待检测的字符串
+    ///   - fallback: 检测失败时返回的回退编码
+    /// - Returns: 检测到的 `String.Encoding`，失败时返回 `fallback`
+    public static func detectEncoding(_ string: String, fallback: String.Encoding) -> String.Encoding {
+        return detectEncoding(string) ?? fallback
     }
 
     /// 一次性检测字节数组的 `String.Encoding`
@@ -436,6 +472,16 @@ public final class Uchardet: @unchecked Sendable {
         detector.handleData(bytes)
         detector.dataEnd()
         return detector.encoding
+    }
+
+    /// 一次性检测字节数组的 `String.Encoding`，检测失败时使用回退编码
+    ///
+    /// - Parameters:
+    ///   - bytes: 待检测的原始字节数组
+    ///   - fallback: 检测失败时返回的回退编码
+    /// - Returns: 检测到的 `String.Encoding`，失败时返回 `fallback`
+    public static func detectEncoding(bytes: [UInt8], fallback: String.Encoding) -> String.Encoding {
+        return detectEncoding(bytes: bytes) ?? fallback
     }
 
     // MARK: - 大文件流式检测 API
@@ -479,6 +525,28 @@ public final class Uchardet: @unchecked Sendable {
         try detector.feedFile(at: url, sampleSize: sampleSize, chunkSize: chunkSize)
         detector.dataEnd()
         return detector.encoding
+    }
+
+    /// 流式读取文件并检测 `String.Encoding`，检测失败时使用回退编码
+    ///
+    /// uchardet 对数据量不足或字符分布单一的内容可能产生误判。
+    /// 当调用方已知文件的可能编码范围时，可通过 `fallback` 提供兜底值，
+    /// 仅在检测结果为 `nil` 时生效，不会覆盖成功的检测结果。
+    ///
+    /// - Parameters:
+    ///   - url: 待检测文件的 URL
+    ///   - fallback: 检测失败时返回的回退编码
+    ///   - sampleSize: 最多采样的字节数，默认 65536（64 KB）
+    ///   - chunkSize: 每次读取的块大小，默认 4096（4 KB）
+    /// - Returns: 检测到的 `String.Encoding`，失败时返回 `fallback`
+    /// - Throws: 文件无法打开或读取时抛出 `CocoaError`
+    public static func detectEncoding(
+        contentsOf url: URL,
+        fallback: String.Encoding,
+        sampleSize: Int = 65_536,
+        chunkSize: Int = 4_096
+    ) throws -> String.Encoding {
+        return try (detectEncoding(contentsOf: url, sampleSize: sampleSize, chunkSize: chunkSize)) ?? fallback
     }
 
     /// 分块读取文件并向检测器喂入数据（内部实现）

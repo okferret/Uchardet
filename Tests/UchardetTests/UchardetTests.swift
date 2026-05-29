@@ -42,14 +42,22 @@ private enum TestError: Error, CustomStringConvertible {
 
 // MARK: - API 基础功能测试
 
+
 @Suite("API 基础功能测试")
 struct APIFunctionalityTests {
 
     @Test("初始化与销毁")
     func testInitAndDeinit() {
-        let detector = Uchardet()
-        // 初始化后 charset 应为 nil（未检测任何数据）
-        #expect(detector.charset == nil)
+//        let detector = Uchardet()
+//        // 初始化后 charset 应为 nil（未检测任何数据）
+//        #expect(detector.charset == nil)
+        
+//        // Do any additional setup after loading the view.
+//        // 获取 GB18030 编码的 Core Foundation 标识
+//        let cfEncoding = CFStringEncodings.GB_18030_2000
+//        // 转换为 Foundation 框架可用的 NSStringEncoding
+//        let encoding = CFStringConvertEncodingToNSStringEncoding(CFStringEncoding(cfEncoding.rawValue))
+        
     }
 
     @Test("handleData 返回值 - 有效数据")

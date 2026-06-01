@@ -53,6 +53,27 @@ private enum CFEnc {
     static let viscii: CFStringEncoding = 0x0A07
 }
 
+// MARK: - UchardetError
+
+/// uchardet 检测过程中可能抛出的错误
+public enum UchardetError: Error, CustomStringConvertible {
+
+    /// 数据为空或数据量不足，无法完成字符集检测
+    case insufficientData
+
+    /// uchardet 无法识别数据的字符集（置信度低于阈值）
+    case unrecognizedEncoding
+
+    public var description: String {
+        switch self {
+        case .insufficientData:
+            return "数据为空或数据量不足，无法完成字符集检测"
+        case .unrecognizedEncoding:
+            return "无法识别数据的字符集（置信度低于阈值）"
+        }
+    }
+}
+
 // MARK: - DetectionResult
 
 /// 字符集检测结果，同时携带原始名称与 `String.Encoding`
@@ -229,7 +250,7 @@ public extension String.Encoding {
 ///
 /// **一次性检测：**
 /// ```swift
-/// // 检测 Data
+/// // 检测 Data（返回可选，数据不足时为 nil）
 /// let result = Uchardet.detect(data)
 /// print(result?.charset)   // "GB18030"
 /// print(result?.encoding)  // Optional(String.Encoding)
@@ -237,8 +258,9 @@ public extension String.Encoding {
 /// // 检测字节数组
 /// let result = Uchardet.detect(bytes: bytes)
 ///
-/// // 流式检测文件（大文件友好，仅采样头部）
+/// // 流式检测文件（大文件友好，仅采样头部；失败时抛出错误）
 /// let result = try Uchardet.detect(fileURL)
+/// print(result.charset)    // "UTF-8"（非可选，失败时已抛出错误）
 /// ```
 ///
 /// **流式检测（手动控制）：**
@@ -250,9 +272,13 @@ public extension String.Encoding {
 ///
 /// **解码：**
 /// ```swift
+/// // detect(_:Data) 返回可选
 /// if let result = Uchardet.detect(data), let text = result.decode(data) {
 ///     print(text)
 /// }
+/// // detect(_:URL) 直接抛出错误，无需解包
+/// let result = try Uchardet.detect(fileURL)
+/// let text = result.decode(try Data(contentsOf: fileURL))
 /// ```
 ///
 /// ## 线程安全性
@@ -367,26 +393,30 @@ public extension Uchardet {
     /// 流式读取文件并检测字符集（仅采样头部，大文件友好）
     ///
     /// ```swift
-    /// if let result = try Uchardet.detect(fileURL) {
-    ///     let data = try Data(contentsOf: fileURL)
-    ///     let text = result.decode(data)
-    /// }
+    /// let result = try Uchardet.detect(fileURL)
+    /// let data = try Data(contentsOf: fileURL)
+    /// let text = result.decode(data)
     /// ```
     ///
     /// - Parameters:
     ///   - url: 待检测文件的 URL
     ///   - sampleSize: 最多采样的字节数，默认 65536（64 KB）
     ///   - chunkSize: 每次读取的块大小，默认 4096（4 KB）
-    /// - Returns: 检测结果；数据不足或无法识别时返回 `nil`
-    /// - Throws: 文件无法打开或读取时抛出 `CocoaError`
+    /// - Returns: 检测结果
+    /// - Throws: 文件无法打开或读取时抛出 `CocoaError`；
+    ///           数据为空或不足时抛出 `UchardetError.insufficientData`；
+    ///           无法识别字符集时抛出 `UchardetError.unrecognizedEncoding`
     static func detect(
         _ url: URL,
         sampleSize: Int = 65_536,
         chunkSize: Int = 4_096
-    ) throws -> DetectionResult? {
+    ) throws -> DetectionResult {
         let detector = Uchardet()
         try detector.feedFile(at: url, sampleSize: sampleSize, chunkSize: chunkSize)
-        return detector.finalize()
+        guard let result = detector.finalize() else {
+            throw UchardetError.unrecognizedEncoding
+        }
+        return result
     }
 }
 

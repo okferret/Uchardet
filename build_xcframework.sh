@@ -691,6 +691,40 @@ cleanup() {
     fi
 }
 
+# ── 删除 C++ 源码（编译成功后保留 xcframework，移除源码）────────────────────
+cleanup_sources() {
+    # 仅当 xcframework 已成功生成时才删除源码
+    if [[ ! -d "${XCFRAMEWORK_PATH}" ]]; then
+        log_warn "xcframework 未找到，跳过源码删除"
+        return 0
+    fi
+
+    log_step "删除 C++ 源码（xcframework 已生成）"
+
+    # 需要删除的源码文件/目录列表
+    local SOURCE_ITEMS=(
+        "src"
+        "doc"
+        "CMakeLists.txt"
+        "uchardet-config.cmake.in"
+        "uchardet.pc.in"
+        "uchardet.doap"
+        "AUTHORS"
+        "COPYING"
+        "INSTALL"
+    )
+
+    for item in "${SOURCE_ITEMS[@]}"; do
+        local TARGET="${SCRIPT_DIR}/${item}"
+        if [[ -e "${TARGET}" ]]; then
+            rm -rf "${TARGET}"
+            log_success "  已删除: ${item}"
+        fi
+    done
+
+    log_success "C++ 源码已清理，仅保留 xcframework"
+}
+
 # ── 主流程 ────────────────────────────────────────────────────────────────────
 main() {
     echo ""
@@ -803,6 +837,9 @@ main() {
 
     # ── 清理 ───────────────────────────────────────────────────────────────────
     cleanup
+
+    # ── 删除 C++ 源码（仅保留 xcframework）────────────────────────────────────
+    cleanup_sources
 
     # ── 打印摘要 ───────────────────────────────────────────────────────────────
     print_summary

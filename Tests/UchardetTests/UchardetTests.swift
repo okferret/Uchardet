@@ -351,7 +351,7 @@ final class UchardetStaticTests: XCTestCase {
         let url = makeTempFile("文件检测测试，UTF-8 内容，足够长以确保准确检测。文件检测测试，UTF-8 内容，足够长以确保准确检测。", encoding: .utf8)
         defer { try? FileManager.default.removeItem(at: url) }
         let result = try Uchardet.detect(url)
-        XCTAssertEqual(result?.encoding, .utf8)
+        XCTAssertEqual(result.encoding, .utf8)
     }
 
     func test_static_detect_url_shiftJIS() throws {
@@ -360,8 +360,7 @@ final class UchardetStaticTests: XCTestCase {
         let url = makeTempFileFromData(data)
         defer { try? FileManager.default.removeItem(at: url) }
         let result = try Uchardet.detect(url)
-        XCTAssertNotNil(result)
-        XCTAssertEqual(result?.encoding, .shiftJIS)
+        XCTAssertEqual(result.encoding, .shiftJIS)
     }
 
     func test_static_detect_url_andDecode() throws {
@@ -370,9 +369,8 @@ final class UchardetStaticTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: url) }
 
         let result = try Uchardet.detect(url)
-        XCTAssertNotNil(result)
         let data = try Data(contentsOf: url)
-        XCTAssertEqual(result?.decode(data), original, "检测后解码应还原原始内容")
+        XCTAssertEqual(result.decode(data), original, "检测后解码应还原原始内容")
     }
 
     // MARK: 反向：detect(_: URL) 文件不存在
@@ -878,14 +876,19 @@ final class UchardetSupplementTests: XCTestCase {
 
     // MARK: detect(_:URL) 空文件返回 nil
 
-    func test_detect_url_emptyFile_returnsNil() throws {
+    func test_detect_url_emptyFile_throws() throws {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("uchardet_empty_\(UUID().uuidString).txt")
         try Data().write(to: url)
         defer { try? FileManager.default.removeItem(at: url) }
 
-        let result = try Uchardet.detect(url)
-        XCTAssertNil(result, "空文件应返回 nil")
+        // detect(url:) 对空文件无法识别编码，应抛出 UchardetError.unrecognizedEncoding
+        XCTAssertThrowsError(try Uchardet.detect(url), "空文件应抛出错误") { error in
+            if let uchardetError = error as? UchardetError {
+                XCTAssertEqual(uchardetError, .unrecognizedEncoding,
+                               "空文件应抛出 unrecognizedEncoding 错误")
+            }
+        }
     }
 
     // MARK: detect(_:URL) 自定义 sampleSize
@@ -901,8 +904,7 @@ final class UchardetSupplementTests: XCTestCase {
 
         // 只采样前 512 字节
         let result = try Uchardet.detect(url, sampleSize: 512)
-        XCTAssertNotNil(result, "自定义 sampleSize 应能正常检测")
-        XCTAssertEqual(result?.encoding, .utf8, "采样 512 字节应能检测为 UTF-8")
+        XCTAssertEqual(result.encoding, .utf8, "采样 512 字节应能检测为 UTF-8")
     }
 
     func test_detect_url_customChunkSize() throws {
@@ -916,7 +918,7 @@ final class UchardetSupplementTests: XCTestCase {
         // 使用极小的 chunkSize（16 字节），结果应与默认一致
         let resultSmallChunk = try Uchardet.detect(url, chunkSize: 16)
         let resultDefault = try Uchardet.detect(url)
-        XCTAssertEqual(resultSmallChunk?.charset, resultDefault?.charset,
+        XCTAssertEqual(resultSmallChunk.charset, resultDefault.charset,
                        "自定义 chunkSize 不应影响检测结果")
     }
 
@@ -1464,7 +1466,8 @@ final class UchardetDeepCoverageTests: XCTestCase {
     // MARK: sampleSize 边界值
 
     func test_detect_url_sampleSize_1() throws {
-        // sampleSize=1 极小采样，可能无法检测，但不应崩溃
+        // sampleSize=1 极小采样，只读 1 字节，uchardet 无法识别编码会抛出错误
+        // 此测试验证：不会崩溃（抛出错误是可接受的行为）
         let text = String(repeating: "UTF-8 中文内容。", count: 100)
         let data = text.data(using: .utf8)!
         let url = FileManager.default.temporaryDirectory
@@ -1472,9 +1475,20 @@ final class UchardetDeepCoverageTests: XCTestCase {
         try data.write(to: url)
         defer { try? FileManager.default.removeItem(at: url) }
 
-        // sampleSize=1 只读 1 字节，不应崩溃（结果可能为 nil）
-        XCTAssertNoThrow(try Uchardet.detect(url, sampleSize: 1),
-                         "sampleSize=1 不应崩溃")
+        // sampleSize=1 只读 1 字节，可能抛出 unrecognizedEncoding，也可能成功（取决于 uchardet 实现）
+        // 关键是不应崩溃（不抛出 fatalError 或 EXC_BAD_ACCESS）
+        do {
+            _ = try Uchardet.detect(url, sampleSize: 1)
+            // 成功也是可接受的
+        } catch let error as UchardetError {
+            // 抛出 UchardetError 是预期行为
+            XCTAssertTrue(
+                error == .unrecognizedEncoding || error == .insufficientData,
+                "sampleSize=1 应抛出 unrecognizedEncoding 或 insufficientData，实际: \(error)"
+            )
+        } catch {
+            XCTFail("sampleSize=1 不应抛出非 UchardetError 类型的错误: \(error)")
+        }
     }
 
     func test_detect_url_chunkSizeLargerThanSampleSize() throws {
@@ -1488,8 +1502,7 @@ final class UchardetDeepCoverageTests: XCTestCase {
 
         // chunkSize(65536) > sampleSize(512)，应正常工作
         let result = try Uchardet.detect(url, sampleSize: 512, chunkSize: 65_536)
-        XCTAssertNotNil(result, "chunkSize > sampleSize 时应能正常检测")
-        XCTAssertEqual(result?.encoding, .utf8)
+        XCTAssertEqual(result.encoding, .utf8, "chunkSize > sampleSize 时应能正常检测")
     }
 
     // MARK: 连续 reset

@@ -64,12 +64,17 @@ public enum UchardetError: Error, CustomStringConvertible {
     /// uchardet 无法识别数据的字符集（置信度低于阈值）
     case unrecognizedEncoding
 
+    /// uchardet 检测到字符集名称，但当前平台不支持该编码
+    case unsupportedEncoding(String)
+
     public var description: String {
         switch self {
         case .insufficientData:
             return "数据为空或数据量不足，无法完成字符集检测"
         case .unrecognizedEncoding:
             return "无法识别数据的字符集（置信度低于阈值）"
+        case .unsupportedEncoding(let charset):
+            return "当前平台不支持该编码：\(charset)"
         }
     }
 }
@@ -82,23 +87,19 @@ public struct DetectionResult: Equatable, CustomStringConvertible {
     /// uchardet 返回的原始字符集名称（iconv 兼容格式，如 `"UTF-8"`、`"GB18030"`）
     public let charset: String
 
-    /// 对应的 `String.Encoding`；若 Apple 平台不支持该编码则为 `nil`
-    public let encoding: String.Encoding?
+    /// 对应的 `String.Encoding`
+    public let encoding: String.Encoding
 
     public var description: String {
-        if let enc = encoding {
-            return "\(charset) (\(enc))"
-        }
-        return "\(charset) (unsupported)"
+        return "\(charset) (\(encoding))"
     }
 
     /// 使用检测到的编码将原始字节解码为字符串
     ///
     /// - Parameter data: 与本次检测结果对应的原始字节数据
-    /// - Returns: 解码后的字符串；编码不支持或解码失败时返回 `nil`
+    /// - Returns: 解码后的字符串；解码失败时返回 `nil`
     public func decode(_ data: Data) -> String? {
-        guard let enc = encoding else { return nil }
-        return String(data: data, encoding: enc)
+        return String(data: data, encoding: encoding)
     }
 
     /// 使用检测到的编码将原始字节解码为字符串，失败时使用回退编码
@@ -227,17 +228,21 @@ public extension String.Encoding {
         default:
             // 回退：通过 CFString IANA 名称转换
             let cfEncoding = CFStringConvertIANACharSetNameToEncoding(name as CFString)
-            guard cfEncoding != kCFStringEncodingInvalidId else { return nil }
+            guard cfEncoding != kCFStringEncodingInvalidId,
+                  CFStringIsEncodingAvailable(cfEncoding) else { return nil }
             let nsEncoding = CFStringConvertEncodingToNSStringEncoding(cfEncoding)
-            guard nsEncoding != UInt(kCFStringEncodingInvalidId) else { return nil }
+            guard nsEncoding != UInt(kCFStringEncodingInvalidId),
+                  nsEncoding != UInt.max else { return nil }
             return String.Encoding(rawValue: nsEncoding)
         }
     }
 
     private static func cf(_ cfEncoding: CFStringEncoding) -> String.Encoding? {
-        guard cfEncoding != kCFStringEncodingInvalidId else { return nil }
+        guard cfEncoding != kCFStringEncodingInvalidId,
+              CFStringIsEncodingAvailable(cfEncoding) else { return nil }
         let nsEncoding = CFStringConvertEncodingToNSStringEncoding(cfEncoding)
-        guard nsEncoding != UInt(kCFStringEncodingInvalidId) else { return nil }
+        guard nsEncoding != UInt(kCFStringEncodingInvalidId),
+              nsEncoding != UInt.max else { return nil }
         return String.Encoding(rawValue: nsEncoding)
     }
 }
@@ -250,33 +255,31 @@ public extension String.Encoding {
 ///
 /// **一次性检测：**
 /// ```swift
-/// // 检测 Data（返回可选，数据不足时为 nil）
-/// let result = Uchardet.detect(data)
-/// print(result?.charset)   // "GB18030"
-/// print(result?.encoding)  // Optional(String.Encoding)
+/// // 检测 Data（失败时抛出错误）
+/// let result = try Uchardet.detect(data)
+/// print(result.charset)   // "GB18030"
+/// print(result.encoding)  // String.Encoding
 ///
 /// // 检测字节数组
-/// let result = Uchardet.detect(bytes: bytes)
+/// let result = try Uchardet.detect(bytes: bytes)
 ///
 /// // 流式检测文件（大文件友好，仅采样头部；失败时抛出错误）
 /// let result = try Uchardet.detect(fileURL)
-/// print(result.charset)    // "UTF-8"（非可选，失败时已抛出错误）
+/// print(result.charset)    // "UTF-8"
 /// ```
 ///
 /// **流式检测（手动控制）：**
 /// ```swift
 /// let detector = Uchardet()
 /// detector.feed(chunk1).feed(chunk2)
-/// let result = detector.finalize()
+/// let result = try detector.finalize()
 /// ```
 ///
 /// **解码：**
 /// ```swift
-/// // detect(_:Data) 返回可选
-/// if let result = Uchardet.detect(data), let text = result.decode(data) {
-///     print(text)
-/// }
-/// // detect(_:URL) 直接抛出错误，无需解包
+/// let result = try Uchardet.detect(data)
+/// let text = result.decode(data)
+///
 /// let result = try Uchardet.detect(fileURL)
 /// let text = result.decode(try Data(contentsOf: fileURL))
 /// ```
@@ -344,17 +347,26 @@ public final class Uchardet {
     /// 调用后检测器进入已完成状态，继续调用 `feed()` 将被忽略。
     /// 若需重新检测，请调用 `reset()` 或创建新实例。
     ///
-    /// - Returns: 检测结果；数据不足或无法识别时返回 `nil`
+    /// - Returns: 检测结果
+    /// - Throws: 数据不足或无法识别时抛出 `UchardetError.unrecognizedEncoding`；
+    ///           当前平台不支持检测到的编码时抛出 `UchardetError.unsupportedEncoding`
     @discardableResult
-    public func finalize() -> DetectionResult? {
+    public func finalize() throws -> DetectionResult {
         if !_finalized {
             uchardet_data_end(handle)
             _finalized = true
         }
-        guard let cStr = uchardet_get_charset(handle) else { return nil }
-        let name = String(cString: cStr)
-        guard !name.isEmpty else { return nil }
-        return DetectionResult(charset: name, encoding: String.Encoding(charsetName: name))
+        guard let cStr = uchardet_get_charset(handle) else {
+            throw UchardetError.unrecognizedEncoding
+        }
+        let charset = String(cString: cStr)
+        guard !charset.isEmpty else {
+            throw UchardetError.unrecognizedEncoding
+        }
+        guard let encoding = String.Encoding(charsetName: charset) else {
+            throw UchardetError.unsupportedEncoding(charset)
+        }
+        return DetectionResult(charset: charset, encoding: encoding)
     }
 
     /// 重置检测器状态，以便复用实例检测新数据
@@ -371,23 +383,27 @@ public extension Uchardet {
     /// 检测 `Data` 的字符集
     ///
     /// ```swift
-    /// let result = Uchardet.detect(data)
-    /// print(result?.charset)   // "UTF-8"
-    /// let text = result?.decode(data)
+    /// let result = try Uchardet.detect(data)
+    /// print(result.charset)   // "UTF-8"
+    /// let text = result.decode(data)
     /// ```
     ///
     /// - Parameter data: 待检测的原始字节数据
-    /// - Returns: 检测结果；数据不足或无法识别时返回 `nil`
-    static func detect(_ data: Data) -> DetectionResult? {
-        Uchardet().feed(data).finalize()
+    /// - Returns: 检测结果
+    /// - Throws: 数据不足或无法识别时抛出 `UchardetError.unrecognizedEncoding`；
+    ///           当前平台不支持检测到的编码时抛出 `UchardetError.unsupportedEncoding`
+    static func detect(_ data: Data) throws -> DetectionResult {
+        try Uchardet().feed(data).finalize()
     }
 
     /// 检测字节数组的字符集
     ///
     /// - Parameter bytes: 待检测的原始字节数组
-    /// - Returns: 检测结果；数据不足或无法识别时返回 `nil`
-    static func detect(bytes: [UInt8]) -> DetectionResult? {
-        Uchardet().feed(bytes).finalize()
+    /// - Returns: 检测结果
+    /// - Throws: 数据不足或无法识别时抛出 `UchardetError.unrecognizedEncoding`；
+    ///           当前平台不支持检测到的编码时抛出 `UchardetError.unsupportedEncoding`
+    static func detect(bytes: [UInt8]) throws -> DetectionResult {
+        try Uchardet().feed(bytes).finalize()
     }
 
     /// 流式读取文件并检测字符集（仅采样头部，大文件友好）
@@ -404,8 +420,8 @@ public extension Uchardet {
     ///   - chunkSize: 每次读取的块大小，默认 4096（4 KB）
     /// - Returns: 检测结果
     /// - Throws: 文件无法打开或读取时抛出 `CocoaError`；
-    ///           数据为空或不足时抛出 `UchardetError.insufficientData`；
-    ///           无法识别字符集时抛出 `UchardetError.unrecognizedEncoding`
+    ///           数据为空或不足时抛出 `UchardetError.unrecognizedEncoding`；
+    ///           当前平台不支持检测到的编码时抛出 `UchardetError.unsupportedEncoding`
     static func detect(
         _ url: URL,
         sampleSize: Int = 65_536,
@@ -413,10 +429,7 @@ public extension Uchardet {
     ) throws -> DetectionResult {
         let detector = Uchardet()
         try detector.feedFile(at: url, sampleSize: sampleSize, chunkSize: chunkSize)
-        guard let result = detector.finalize() else {
-            throw UchardetError.unrecognizedEncoding
-        }
-        return result
+        return try detector.finalize()
     }
 }
 

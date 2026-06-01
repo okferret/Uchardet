@@ -29,12 +29,6 @@ final class DetectionResultTests: XCTestCase {
         XCTAssertTrue(r.description.contains("UTF-8"), "description 应包含 charset 名称")
     }
 
-    func test_description_withoutEncoding() {
-        let r = DetectionResult(charset: "X-EXOTIC", encoding: nil)
-        XCTAssertTrue(r.description.contains("X-EXOTIC"))
-        XCTAssertTrue(r.description.contains("unsupported"), "不支持的编码应标注 unsupported")
-    }
-
     // MARK: 正向：decode(_:)
 
     func test_decode_utf8_roundtrip() {
@@ -79,13 +73,7 @@ final class DetectionResultTests: XCTestCase {
         XCTAssertEqual(r.decode(data), original)
     }
 
-    // MARK: 反向：decode(_:) 返回 nil
-
-    func test_decode_returnsNil_whenEncodingIsNil() {
-        let data = "test".data(using: .utf8)!
-        let r = DetectionResult(charset: "X-UNSUPPORTED", encoding: nil)
-        XCTAssertNil(r.decode(data), "encoding 为 nil 时 decode 应返回 nil")
-    }
+    // MARK: 反向：decode(_:) 返回 nil（编码不兼容）
 
     func test_decode_returnsNil_whenDataIsIncompatible() {
         // 用 UTF-8 编码的中文字节，用 ASCII 解码应失败（返回 nil）
@@ -103,15 +91,6 @@ final class DetectionResultTests: XCTestCase {
         let r = DetectionResult(charset: "UTF-8", encoding: .utf8)
         let result = r.decode(data, fallbackEncoding: .isoLatin1)
         XCTAssertEqual(result, original, "有有效编码时应使用检测到的编码，不使用 fallback")
-    }
-
-    func test_decodeFallback_usesFallback_whenEncodingIsNil() {
-        let original = "fallback only"
-        let data = original.data(using: .utf8)!
-        let r = DetectionResult(charset: "X-UNSUPPORTED", encoding: nil)
-        let result = r.decode(data, fallbackEncoding: .utf8)
-        XCTAssertNotNil(result, "encoding 为 nil 时应使用 fallback 编码，不应返回 nil")
-        XCTAssertEqual(result, original, "encoding 为 nil 时应使用 fallback 编码")
     }
 
     func test_decodeFallback_usesFallback_whenDecodeFails() {
@@ -153,147 +132,142 @@ final class UchardetStreamTests: XCTestCase {
 
     // MARK: 正向：feed + finalize
 
-    func test_feed_data_utf8() {
+    func test_feed_data_utf8() throws {
         let data = "这是 UTF-8 中文文本，足够长以供 uchardet 检测。这是 UTF-8 中文文本，足够长以供 uchardet 检测。".data(using: .utf8)!
-        let result = Uchardet().feed(data).finalize()
-        XCTAssertNotNil(result)
-        XCTAssertEqual(result?.charset.uppercased(), "UTF-8")
-        XCTAssertEqual(result?.encoding, .utf8)
+        let result = try Uchardet().feed(data).finalize()
+        XCTAssertEqual(result.charset.uppercased(), "UTF-8")
+        XCTAssertEqual(result.encoding, .utf8)
     }
 
-    func test_feed_bytes_ascii() {
+    func test_feed_bytes_ascii() throws {
         // 足够长的纯 ASCII 文本
         let text = String(repeating: "Hello World! This is ASCII text. ", count: 10)
         let bytes = Array(text.utf8)
-        let result = Uchardet().feed(bytes).finalize()
-        XCTAssertNotNil(result)
+        let result = try Uchardet().feed(bytes).finalize()
         // uchardet 对纯 ASCII 可能返回 ASCII 或 UTF-8，两者均可接受
-        let charset = result?.charset.uppercased() ?? ""
+        let charset = result.charset.uppercased()
         XCTAssertTrue(charset == "ASCII" || charset == "UTF-8",
                       "纯 ASCII 文本应检测为 ASCII 或 UTF-8，实际: \(charset)")
     }
 
-    func test_feed_chaining_multipleChunks() {
+    func test_feed_chaining_multipleChunks() throws {
         // 分块喂入，结果应与一次性喂入相同
         let text = "分块喂入测试：这段文字将被分成多个数据块依次喂入检测器，最终结果应与一次性喂入相同。"
         let data = text.data(using: .utf8)!
         let mid = data.count / 2
 
-        let chunked = Uchardet()
+        let chunked = try Uchardet()
             .feed(data[..<mid])
             .feed(data[mid...])
             .finalize()
 
-        let single = Uchardet().feed(data).finalize()
+        let single = try Uchardet().feed(data).finalize()
 
-        XCTAssertEqual(chunked?.charset, single?.charset, "分块喂入与一次性喂入结果应一致")
+        XCTAssertEqual(chunked.charset, single.charset, "分块喂入与一次性喂入结果应一致")
     }
 
     func test_feed_shiftJIS_detection() throws {
         let text = String(repeating: "日本語テキストのエンコーディング検出テスト。", count: 5)
         guard let data = text.data(using: .shiftJIS) else { throw XCTSkip("无法编码 Shift-JIS") }
-        let result = Uchardet().feed(data).finalize()
-        XCTAssertNotNil(result)
-        let charset = result?.charset.uppercased() ?? ""
+        let result = try Uchardet().feed(data).finalize()
+        let charset = result.charset.uppercased()
         XCTAssertTrue(charset.contains("SHIFT") || charset.contains("SJIS"),
                       "应检测为 Shift-JIS，实际: \(charset)")
-        XCTAssertEqual(result?.encoding, .shiftJIS)
+        XCTAssertEqual(result.encoding, .shiftJIS)
     }
 
     func test_feed_eucJP_detection() throws {
         let text = String(repeating: "日本語テキストのエンコーディング検出テスト。", count: 5)
         guard let data = text.data(using: .japaneseEUC) else { throw XCTSkip("无法编码 EUC-JP") }
-        let result = Uchardet().feed(data).finalize()
-        XCTAssertNotNil(result)
-        let charset = result?.charset.uppercased() ?? ""
+        let result = try Uchardet().feed(data).finalize()
+        let charset = result.charset.uppercased()
         XCTAssertTrue(charset.contains("EUC-JP") || charset.contains("EUCJP"),
                       "应检测为 EUC-JP，实际: \(charset)")
-        XCTAssertEqual(result?.encoding, .japaneseEUC)
+        XCTAssertEqual(result.encoding, .japaneseEUC)
     }
 
     func test_feed_utf16BE_detection() throws {
         // uchardet 对无 BOM 的 UTF-16BE 数据检测结果不可靠：
         // 字节流可能被误判为 GB18030、EUC-JP 等其他编码。
-        // 此测试仅验证：喂入足够数据后 uchardet 能返回某个检测结果（不为 nil）。
+        // 此测试仅验证：喂入足够数据后 uchardet 能返回某个检测结果（不抛出错误）。
         let text = String(repeating: "日本語テキスト UTF-16 Big Endian 検出テスト。", count: 10)
         guard let data = text.data(using: .utf16BigEndian) else { throw XCTSkip("无法编码 UTF-16BE") }
-        let result = Uchardet().feed(data).finalize()
-        // 只要 uchardet 返回了某个结果即可（charset 不为空）
-        XCTAssertNotNil(result, "喂入足够数据后应返回检测结果")
-        XCTAssertFalse(result?.charset.isEmpty ?? true, "charset 不应为空字符串")
+        // 只要 uchardet 返回了某个结果即可（不抛出错误）
+        let result = try Uchardet().feed(data).finalize()
+        XCTAssertFalse(result.charset.isEmpty, "charset 不应为空字符串")
     }
 
     // MARK: 正向：finalize 幂等性
 
-    func test_finalize_idempotent() {
+    func test_finalize_idempotent() throws {
         let data = "幂等性测试文本，UTF-8 编码。".data(using: .utf8)!
         let detector = Uchardet()
         detector.feed(data)
-        let r1 = detector.finalize()
-        let r2 = detector.finalize()
-        let r3 = detector.finalize()
-        XCTAssertEqual(r1?.charset, r2?.charset, "多次 finalize 结果应一致")
-        XCTAssertEqual(r2?.charset, r3?.charset)
+        let r1 = try detector.finalize()
+        let r2 = try detector.finalize()
+        let r3 = try detector.finalize()
+        XCTAssertEqual(r1.charset, r2.charset, "多次 finalize 结果应一致")
+        XCTAssertEqual(r2.charset, r3.charset)
     }
 
     // MARK: 正向：reset 后可重新检测
 
-    func test_reset_allowsReuse() {
+    func test_reset_allowsReuse() throws {
         let data = "重置后重新检测，UTF-8 文本。".data(using: .utf8)!
         let detector = Uchardet()
 
         detector.feed(data)
-        let r1 = detector.finalize()
-        XCTAssertEqual(r1?.charset.uppercased(), "UTF-8")
+        let r1 = try detector.finalize()
+        XCTAssertEqual(r1.charset.uppercased(), "UTF-8")
 
         detector.reset()
         detector.feed(data)
-        let r2 = detector.finalize()
-        XCTAssertEqual(r2?.charset.uppercased(), "UTF-8", "reset 后重新检测应得到相同结果")
+        let r2 = try detector.finalize()
+        XCTAssertEqual(r2.charset.uppercased(), "UTF-8", "reset 后重新检测应得到相同结果")
     }
 
-    func test_reset_clearsPreviousState() {
+    func test_reset_clearsPreviousState() throws {
         let utf8Data = "UTF-8 中文文本测试内容，足够长。UTF-8 中文文本测试内容，足够长。".data(using: .utf8)!
         let detector = Uchardet()
         detector.feed(utf8Data)
-        _ = detector.finalize()
+        _ = try detector.finalize()
 
         // reset 后喂入不同数据
         detector.reset()
         let asciiText = String(repeating: "ASCII only text for detection. ", count: 10)
         let asciiData = asciiText.data(using: .ascii)!
         detector.feed(asciiData)
-        let r2 = detector.finalize()
-        XCTAssertNotNil(r2, "reset 后应能正常检测新数据")
+        let r2 = try detector.finalize()
+        XCTAssertFalse(r2.charset.isEmpty, "reset 后应能正常检测新数据")
     }
 
-    // MARK: 反向：空数据返回 nil
+    // MARK: 反向：空数据抛出错误
 
-    func test_finalize_emptyData_returnsNil() {
-        XCTAssertNil(Uchardet().feed(Data()).finalize(), "空 Data 应返回 nil")
+    func test_finalize_emptyData_throws() {
+        XCTAssertThrowsError(try Uchardet().feed(Data()).finalize(), "空 Data 应抛出错误")
     }
 
-    func test_finalize_emptyBytes_returnsNil() {
-        XCTAssertNil(Uchardet().feed([UInt8]()).finalize(), "空字节数组应返回 nil")
+    func test_finalize_emptyBytes_throws() {
+        XCTAssertThrowsError(try Uchardet().feed([UInt8]()).finalize(), "空字节数组应抛出错误")
     }
 
-    func test_finalize_withoutFeed_returnsNil() {
-        XCTAssertNil(Uchardet().finalize(), "未喂入任何数据应返回 nil")
+    func test_finalize_withoutFeed_throws() {
+        XCTAssertThrowsError(try Uchardet().finalize(), "未喂入任何数据应抛出错误")
     }
 
     // MARK: 反向：finalize 后 feed 被忽略
 
-    func test_feed_afterFinalize_isIgnored() {
+    func test_feed_afterFinalize_isIgnored() throws {
         let data = "UTF-8 文本".data(using: .utf8)!
         let detector = Uchardet()
         detector.feed(data)
-        let r1 = detector.finalize()
+        let r1 = try detector.finalize()
 
         // finalize 后继续 feed 不应改变结果
         detector.feed("完全不同的内容 completely different".data(using: .utf8)!)
-        let r2 = detector.finalize()
+        let r2 = try detector.finalize()
 
-        XCTAssertEqual(r1?.charset, r2?.charset, "finalize 后 feed 应被忽略")
+        XCTAssertEqual(r1.charset, r2.charset, "finalize 后 feed 应被忽略")
     }
 }
 
@@ -303,46 +277,44 @@ final class UchardetStaticTests: XCTestCase {
 
     // MARK: 正向：detect(_: Data)
 
-    func test_static_detect_data_utf8() {
+    func test_static_detect_data_utf8() throws {
         let data = "静态方法检测 UTF-8 文本，内容足够长以确保检测准确。".data(using: .utf8)!
-        let result = Uchardet.detect(data)
-        XCTAssertEqual(result?.encoding, .utf8)
+        let result = try Uchardet.detect(data)
+        XCTAssertEqual(result.encoding, .utf8)
     }
 
     func test_static_detect_data_shiftJIS() throws {
         let text = String(repeating: "日本語テキスト検出テスト。", count: 5)
         guard let data = text.data(using: .shiftJIS) else { throw XCTSkip("无法编码 Shift-JIS") }
-        let result = Uchardet.detect(data)
-        XCTAssertNotNil(result)
-        XCTAssertEqual(result?.encoding, .shiftJIS)
+        let result = try Uchardet.detect(data)
+        XCTAssertEqual(result.encoding, .shiftJIS)
     }
 
     func test_static_detect_data_eucJP() throws {
         let text = String(repeating: "日本語テキスト検出テスト。", count: 5)
         guard let data = text.data(using: .japaneseEUC) else { throw XCTSkip("无法编码 EUC-JP") }
-        let result = Uchardet.detect(data)
-        XCTAssertNotNil(result)
-        XCTAssertEqual(result?.encoding, .japaneseEUC)
+        let result = try Uchardet.detect(data)
+        XCTAssertEqual(result.encoding, .japaneseEUC)
     }
 
-    // MARK: 反向：detect(_: Data) 空数据
+    // MARK: 反向：detect(_: Data) 空数据抛出错误
 
-    func test_static_detect_emptyData_returnsNil() {
-        XCTAssertNil(Uchardet.detect(Data()))
+    func test_static_detect_emptyData_throws() {
+        XCTAssertThrowsError(try Uchardet.detect(Data()))
     }
 
     // MARK: 正向：detect(bytes:)
 
-    func test_static_detect_bytes_utf8() {
+    func test_static_detect_bytes_utf8() throws {
         let bytes = Array("字节数组检测测试，UTF-8 编码，内容足够长。字节数组检测测试，UTF-8 编码，内容足够长。".utf8)
-        let result = Uchardet.detect(bytes: bytes)
-        XCTAssertEqual(result?.encoding, .utf8)
+        let result = try Uchardet.detect(bytes: bytes)
+        XCTAssertEqual(result.encoding, .utf8)
     }
 
-    // MARK: 反向：detect(bytes:) 空数组
+    // MARK: 反向：detect(bytes:) 空数组抛出错误
 
-    func test_static_detect_emptyBytes_returnsNil() {
-        XCTAssertNil(Uchardet.detect(bytes: []))
+    func test_static_detect_emptyBytes_throws() {
+        XCTAssertThrowsError(try Uchardet.detect(bytes: []))
     }
 
     // MARK: 正向：detect(_: URL)
@@ -691,12 +663,9 @@ final class StringEncodingNegativeTests: XCTestCase {
         let text = String(repeating: "日本語テスト", count: 3)
         guard let sjisData = text.data(using: .shiftJIS) else { throw XCTSkip("无法编码 Shift-JIS") }
         let decoded = String(data: sjisData, encoding: .utf8)
-        // Shift-JIS 字节序列通常不是合法 UTF-8，应返回 nil
-        // （极少数情况下可能恰好合法，此处仅验证不等于原始文本）
         if let decoded = decoded {
             XCTAssertNotEqual(decoded, text, "Shift-JIS 字节用 UTF-8 解码不应还原原始日文")
         }
-        // decoded == nil 也是正确的反向结果
     }
 
     func test_wrongEncoding_eucJPAsShiftJIS_notEqual() throws {
@@ -729,7 +698,6 @@ final class StringEncodingNegativeTests: XCTestCase {
         if let decoded = decoded {
             XCTAssertNotEqual(decoded, original, "用错误编码解码不应还原原始文本")
         }
-        // decoded == nil 也是正确的反向结果
     }
 }
 
@@ -750,8 +718,11 @@ final class UchardetEndToEndTests: XCTestCase {
             XCTFail("无法将文本编码为 \(encoding)", file: file, line: line)
             return
         }
-        guard let result = Uchardet.detect(data) else {
-            XCTFail("uchardet 未能检测到编码", file: file, line: line)
+        let result: DetectionResult
+        do {
+            result = try Uchardet.detect(data)
+        } catch {
+            XCTFail("uchardet 未能检测到编码: \(error)", file: file, line: line)
             return
         }
         let charsetUpper = result.charset.uppercased()
@@ -800,8 +771,6 @@ final class UchardetEndToEndTests: XCTestCase {
     func test_e2e_eucKR_korean() throws {
         guard let enc = String.Encoding(charsetName: "EUC-KR") else { throw XCTSkip("EUC-KR 不可用") }
         let text = String(repeating: "한국어 텍스트 인코딩 감지 테스트 내용입니다.", count: 5)
-        // uchardet 对 EUC-KR 编码的韩文可能返回 "UHC"（UHC 是 EUC-KR 的超集，兼容）
-        // 或 "EUC-KR"，两者均为正确结果
         assertDetectAndDecode(text, encoding: enc, expectedCharsetContains: "UHC",
                               alternativeKeyword: "EUC-KR")
     }
@@ -823,7 +792,6 @@ final class DetectionResultSupplementTests: XCTestCase {
 
     func test_description_withEncoding_containsEncodingInfo() {
         let r = DetectionResult(charset: "UTF-8", encoding: .utf8)
-        // description 应同时包含 charset 名称和 encoding 信息（不仅仅是 charset）
         XCTAssertFalse(r.description.contains("unsupported"),
                        "有有效 encoding 时 description 不应包含 'unsupported'")
         XCTAssertTrue(r.description.contains("UTF-8"),
@@ -831,19 +799,6 @@ final class DetectionResultSupplementTests: XCTestCase {
     }
 
     // MARK: Equatable：charset 相同但 encoding 不同
-
-    func test_equatable_sameCharset_differentEncoding_notEqual() {
-        // charset 相同但 encoding 不同（一个有效一个 nil）
-        let r1 = DetectionResult(charset: "UTF-8", encoding: .utf8)
-        let r2 = DetectionResult(charset: "UTF-8", encoding: nil)
-        XCTAssertNotEqual(r1, r2, "charset 相同但 encoding 不同时应不相等")
-    }
-
-    func test_equatable_bothEncodingNil_sameCharset() {
-        let r1 = DetectionResult(charset: "X-EXOTIC", encoding: nil)
-        let r2 = DetectionResult(charset: "X-EXOTIC", encoding: nil)
-        XCTAssertEqual(r1, r2, "charset 和 encoding 均相同时应相等")
-    }
 
     func test_equatable_differentCharset_sameEncoding() {
         // charset 不同但 encoding 相同（如 UTF-8 和 utf8 都映射到 .utf8）
@@ -874,7 +829,7 @@ final class DetectionResultSupplementTests: XCTestCase {
 
 final class UchardetSupplementTests: XCTestCase {
 
-    // MARK: detect(_:URL) 空文件返回 nil
+    // MARK: detect(_:URL) 空文件抛出错误
 
     func test_detect_url_emptyFile_throws() throws {
         let url = FileManager.default.temporaryDirectory
@@ -882,11 +837,14 @@ final class UchardetSupplementTests: XCTestCase {
         try Data().write(to: url)
         defer { try? FileManager.default.removeItem(at: url) }
 
-        // detect(url:) 对空文件无法识别编码，应抛出 UchardetError.unrecognizedEncoding
         XCTAssertThrowsError(try Uchardet.detect(url), "空文件应抛出错误") { error in
             if let uchardetError = error as? UchardetError {
-                XCTAssertEqual(uchardetError, .unrecognizedEncoding,
-                               "空文件应抛出 unrecognizedEncoding 错误")
+                switch uchardetError {
+                case .unrecognizedEncoding, .unsupportedEncoding:
+                    break // 均为预期错误
+                case .insufficientData:
+                    XCTFail("不应抛出 insufficientData")
+                }
             }
         }
     }
@@ -894,7 +852,6 @@ final class UchardetSupplementTests: XCTestCase {
     // MARK: detect(_:URL) 自定义 sampleSize
 
     func test_detect_url_customSampleSize() throws {
-        // 写入足够大的 UTF-8 文件，用极小的 sampleSize 仍能检测
         let text = String(repeating: "UTF-8 中文内容用于采样检测。", count: 100)
         let data = text.data(using: .utf8)!
         let url = FileManager.default.temporaryDirectory
@@ -902,7 +859,6 @@ final class UchardetSupplementTests: XCTestCase {
         try data.write(to: url)
         defer { try? FileManager.default.removeItem(at: url) }
 
-        // 只采样前 512 字节
         let result = try Uchardet.detect(url, sampleSize: 512)
         XCTAssertEqual(result.encoding, .utf8, "采样 512 字节应能检测为 UTF-8")
     }
@@ -915,7 +871,6 @@ final class UchardetSupplementTests: XCTestCase {
         try data.write(to: url)
         defer { try? FileManager.default.removeItem(at: url) }
 
-        // 使用极小的 chunkSize（16 字节），结果应与默认一致
         let resultSmallChunk = try Uchardet.detect(url, chunkSize: 16)
         let resultDefault = try Uchardet.detect(url)
         XCTAssertEqual(resultSmallChunk.charset, resultDefault.charset,
@@ -924,7 +879,7 @@ final class UchardetSupplementTests: XCTestCase {
 
     // MARK: 多实例独立性
 
-    func test_multipleInstances_independent() {
+    func test_multipleInstances_independent() throws {
         let utf8Text = String(repeating: "UTF-8 中文文本检测。", count: 10)
         let utf8Data = utf8Text.data(using: .utf8)!
 
@@ -934,12 +889,9 @@ final class UchardetSupplementTests: XCTestCase {
         d1.feed(utf8Data)
         // d2 未喂入任何数据
 
-        let r1 = d1.finalize()
-        let r2 = d2.finalize()
-
-        XCTAssertNotNil(r1, "d1 应有检测结果")
-        XCTAssertNil(r2, "d2 未喂入数据，应返回 nil")
-        XCTAssertEqual(r1?.charset.uppercased(), "UTF-8")
+        let r1 = try d1.finalize()
+        XCTAssertThrowsError(try d2.finalize(), "d2 未喂入数据，应抛出错误")
+        XCTAssertEqual(r1.charset.uppercased(), "UTF-8")
     }
 
     func test_multipleInstances_differentEncodings() throws {
@@ -955,38 +907,34 @@ final class UchardetSupplementTests: XCTestCase {
         d1.feed(utf8Data)
         d2.feed(sjisData)
 
-        let r1 = d1.finalize()
-        let r2 = d2.finalize()
+        let r1 = try d1.finalize()
+        let r2 = try d2.finalize()
 
-        XCTAssertEqual(r1?.charset.uppercased(), "UTF-8", "d1 应检测为 UTF-8")
-        XCTAssertEqual(r2?.encoding, .shiftJIS, "d2 应检测为 Shift-JIS")
-        // 两个实例互不干扰
-        XCTAssertNotEqual(r1?.charset, r2?.charset, "两个实例检测结果应不同")
+        XCTAssertEqual(r1.charset.uppercased(), "UTF-8", "d1 应检测为 UTF-8")
+        XCTAssertEqual(r2.encoding, .shiftJIS, "d2 应检测为 Shift-JIS")
+        XCTAssertNotEqual(r1.charset, r2.charset, "两个实例检测结果应不同")
     }
 
-    // MARK: reset 后 finalize 不崩溃
+    // MARK: reset 后 finalize 抛出错误
 
-    func test_reset_thenFinalize_withoutFeed_returnsNil() {
+    func test_reset_thenFinalize_withoutFeed_throws() throws {
         let detector = Uchardet()
         let data = "UTF-8 文本".data(using: .utf8)!
         detector.feed(data)
-        _ = detector.finalize()
+        _ = try detector.finalize()
 
         detector.reset()
-        // reset 后不 feed，直接 finalize
-        let result = detector.finalize()
-        XCTAssertNil(result, "reset 后不 feed 直接 finalize 应返回 nil")
+        XCTAssertThrowsError(try detector.finalize(), "reset 后不 feed 直接 finalize 应抛出错误")
     }
 
     // MARK: 大数据量检测
 
-    func test_largeData_utf8() {
-        // 1MB UTF-8 数据
+    func test_largeData_utf8() throws {
         let text = String(repeating: "大数据量 UTF-8 检测测试内容，确保性能和正确性。", count: 3000)
         let data = text.data(using: .utf8)!
         XCTAssertGreaterThan(data.count, 100_000, "测试数据应超过 100KB")
-        let result = Uchardet.detect(data)
-        XCTAssertEqual(result?.encoding, .utf8, "大数据量 UTF-8 应正确检测")
+        let result = try Uchardet.detect(data)
+        XCTAssertEqual(result.encoding, .utf8, "大数据量 UTF-8 应正确检测")
     }
 }
 
@@ -997,13 +945,11 @@ final class StringEncodingSupplementTests: XCTestCase {
     // MARK: 下划线转连字符
 
     func test_underscoreToHyphen_utf8() {
-        // "UTF_8" 中的下划线应被转换为连字符后匹配 "UTF-8"
         XCTAssertEqual(String.Encoding(charsetName: "UTF_8"), .utf8,
                        "UTF_8（下划线）应映射到 UTF-8")
     }
 
     func test_underscoreToHyphen_iso8859() {
-        // "ISO_8859_1" 应映射到 ISO-8859-1
         XCTAssertEqual(String.Encoding(charsetName: "ISO_8859_1"), .isoLatin1,
                        "ISO_8859_1（下划线）应映射到 ISO-8859-1")
     }
@@ -1033,7 +979,6 @@ final class StringEncodingSupplementTests: XCTestCase {
     // MARK: 前后空白被忽略
 
     func test_leadingTrailingWhitespace_utf8() {
-        // 前后有空白的 charset 名称应能正确映射
         XCTAssertEqual(String.Encoding(charsetName: "  UTF-8  "), .utf8,
                        "前后空白应被忽略")
     }
@@ -1261,7 +1206,6 @@ final class StringEncodingDeepCoverageTests: XCTestCase {
     // MARK: 含空格的别名
 
     func test_shiftJIS_withSpace_notNil() {
-        // "SHIFT JIS"（含空格）在 switch 中有明确处理
         XCTAssertNotNil(String.Encoding(charsetName: "SHIFT JIS"), "SHIFT JIS（含空格）应能映射")
     }
 
@@ -1271,7 +1215,6 @@ final class StringEncodingDeepCoverageTests: XCTestCase {
     }
 
     func test_usAscii_withSpace_notNil() {
-        // "US ASCII"（含空格）在 switch 中有明确处理
         XCTAssertNotNil(String.Encoding(charsetName: "US ASCII"), "US ASCII（含空格）应能映射")
     }
 
@@ -1401,14 +1344,12 @@ final class StringEncodingDeepCoverageTests: XCTestCase {
 
     // MARK: 越南语
 
-    func test_viscii_notNil() {
-        XCTAssertNotNil(String.Encoding(charsetName: "VISCII"), "VISCII 应能映射")
-    }
-
-    func test_viscii_alias_consistent() {
+    func test_viscii_aliasConsistency() {
+        // VISCII 在部分平台（如 macOS）上不可用（CFStringIsEncodingAvailable 返回 false）
+        // 无论是否可用，两个别名的映射结果应保持一致（同为 nil 或同为相同 encoding）
         let e1 = String.Encoding(charsetName: "VISCII")
         let e2 = String.Encoding(charsetName: "VISCII1.1-1")
-        XCTAssertEqual(e1, e2, "VISCII 和 VISCII1.1-1 应映射到相同编码")
+        XCTAssertEqual(e1, e2, "VISCII 和 VISCII1.1-1 应映射到相同结果（均可用或均不可用）")
     }
 
     func test_windows1258_notNil() {
@@ -1445,17 +1386,10 @@ final class StringEncodingDeepCoverageTests: XCTestCase {
 
     func test_description_format_withEncoding() {
         let r = DetectionResult(charset: "UTF-8", encoding: .utf8)
-        // 格式应为 "UTF-8 (StringEncoding)"，包含括号
         XCTAssertTrue(r.description.hasPrefix("UTF-8 ("),
                       "description 应以 'charset (' 开头，实际: \(r.description)")
         XCTAssertTrue(r.description.hasSuffix(")"),
                       "description 应以 ')' 结尾，实际: \(r.description)")
-    }
-
-    func test_description_format_withoutEncoding() {
-        let r = DetectionResult(charset: "X-EXOTIC", encoding: nil)
-        XCTAssertEqual(r.description, "X-EXOTIC (unsupported)",
-                       "无 encoding 时 description 应为 'charset (unsupported)'")
     }
 }
 
@@ -1466,8 +1400,6 @@ final class UchardetDeepCoverageTests: XCTestCase {
     // MARK: sampleSize 边界值
 
     func test_detect_url_sampleSize_1() throws {
-        // sampleSize=1 极小采样，只读 1 字节，uchardet 无法识别编码会抛出错误
-        // 此测试验证：不会崩溃（抛出错误是可接受的行为）
         let text = String(repeating: "UTF-8 中文内容。", count: 100)
         let data = text.data(using: .utf8)!
         let url = FileManager.default.temporaryDirectory
@@ -1475,24 +1407,21 @@ final class UchardetDeepCoverageTests: XCTestCase {
         try data.write(to: url)
         defer { try? FileManager.default.removeItem(at: url) }
 
-        // sampleSize=1 只读 1 字节，可能抛出 unrecognizedEncoding，也可能成功（取决于 uchardet 实现）
-        // 关键是不应崩溃（不抛出 fatalError 或 EXC_BAD_ACCESS）
         do {
             _ = try Uchardet.detect(url, sampleSize: 1)
-            // 成功也是可接受的
         } catch let error as UchardetError {
-            // 抛出 UchardetError 是预期行为
-            XCTAssertTrue(
-                error == .unrecognizedEncoding || error == .insufficientData,
-                "sampleSize=1 应抛出 unrecognizedEncoding 或 insufficientData，实际: \(error)"
-            )
+            switch error {
+            case .unrecognizedEncoding, .unsupportedEncoding:
+                break // 预期错误
+            case .insufficientData:
+                XCTFail("不应抛出 insufficientData")
+            }
         } catch {
             XCTFail("sampleSize=1 不应抛出非 UchardetError 类型的错误: \(error)")
         }
     }
 
     func test_detect_url_chunkSizeLargerThanSampleSize() throws {
-        // chunkSize > sampleSize 时，effectiveChunk = min(chunkSize, sampleSize) = sampleSize
         let text = String(repeating: "UTF-8 中文内容用于测试。", count: 50)
         let data = text.data(using: .utf8)!
         let url = FileManager.default.temporaryDirectory
@@ -1500,44 +1429,37 @@ final class UchardetDeepCoverageTests: XCTestCase {
         try data.write(to: url)
         defer { try? FileManager.default.removeItem(at: url) }
 
-        // chunkSize(65536) > sampleSize(512)，应正常工作
         let result = try Uchardet.detect(url, sampleSize: 512, chunkSize: 65_536)
         XCTAssertEqual(result.encoding, .utf8, "chunkSize > sampleSize 时应能正常检测")
     }
 
     // MARK: 连续 reset
 
-    func test_consecutiveReset_nocrash() {
+    func test_consecutiveReset_nocrash() throws {
         let detector = Uchardet()
         let data = "UTF-8 文本".data(using: .utf8)!
         detector.feed(data)
-        _ = detector.finalize()
+        _ = try detector.finalize()
 
-        // 连续两次 reset 不应崩溃
         detector.reset()
         detector.reset()
 
-        // reset 后正常使用
         detector.feed(data)
-        let result = detector.finalize()
-        XCTAssertNotNil(result, "连续 reset 后应能正常检测")
+        let result = try detector.finalize()
+        XCTAssertFalse(result.charset.isEmpty, "连续 reset 后应能正常检测")
     }
 
     func test_reset_withoutFeed_nocrash() {
-        // 未喂入数据直接 reset 不应崩溃
         let detector = Uchardet()
         XCTAssertNoThrow(detector.reset(), "未喂入数据直接 reset 不应崩溃")
     }
 
     // MARK: detect(bytes:) 端到端
 
-    func test_e2e_detectBytes_utf8() {
+    func test_e2e_detectBytes_utf8() throws {
         let text = String(repeating: "字节数组端到端检测测试，UTF-8 编码。", count: 5)
         let bytes = Array(text.utf8)
-        guard let result = Uchardet.detect(bytes: bytes) else {
-            XCTFail("detect(bytes:) 应返回检测结果")
-            return
-        }
+        let result = try Uchardet.detect(bytes: bytes)
         XCTAssertEqual(result.charset.uppercased(), "UTF-8", "应检测为 UTF-8")
         let data = Data(bytes)
         let decoded = result.decode(data)
@@ -1548,10 +1470,7 @@ final class UchardetDeepCoverageTests: XCTestCase {
         let text = String(repeating: "日本語テキスト検出テスト。", count: 5)
         guard let sjisData = text.data(using: .shiftJIS) else { throw XCTSkip("无法编码 Shift-JIS") }
         let bytes = Array(sjisData)
-        guard let result = Uchardet.detect(bytes: bytes) else {
-            XCTFail("detect(bytes:) 应返回检测结果")
-            return
-        }
+        let result = try Uchardet.detect(bytes: bytes)
         XCTAssertEqual(result.encoding, .shiftJIS, "应检测为 Shift-JIS")
         let decoded = result.decode(sjisData)
         XCTAssertEqual(decoded, text, "detect(bytes:) Shift-JIS 端到端解码应还原原始文本")
@@ -1559,19 +1478,17 @@ final class UchardetDeepCoverageTests: XCTestCase {
 
     // MARK: 链式 detect + decode
 
-    func test_chainedDetectAndDecode_utf8() {
+    func test_chainedDetectAndDecode_utf8() throws {
         let text = String(repeating: "链式调用测试，UTF-8 编码内容。", count: 5)
         let data = text.data(using: .utf8)!
-        // 链式：detect → decode
-        let decoded = Uchardet.detect(data)?.decode(data)
+        let decoded = try Uchardet.detect(data).decode(data)
         XCTAssertEqual(decoded, text, "链式 detect + decode 应还原原始文本")
     }
 
-    func test_chainedDetectAndDecode_withFallback() {
+    func test_chainedDetectAndDecode_withFallback() throws {
         let text = String(repeating: "链式 fallback 测试，UTF-8 编码。", count: 5)
         let data = text.data(using: .utf8)!
-        // 链式：detect → decode(fallbackEncoding:)
-        let decoded = Uchardet.detect(data)?.decode(data, fallbackEncoding: .isoLatin1)
+        let decoded = try Uchardet.detect(data).decode(data, fallbackEncoding: .isoLatin1)
         XCTAssertEqual(decoded, text, "链式 detect + decode(fallbackEncoding:) 应还原原始文本")
     }
 
@@ -1585,14 +1502,10 @@ final class UchardetDeepCoverageTests: XCTestCase {
         guard let data = text.data(using: enc) else {
             throw XCTSkip("无法将希腊语文本编码为 ISO-8859-7")
         }
-        guard let result = Uchardet.detect(data) else {
-            XCTFail("uchardet 未能检测到编码")
-            return
-        }
+        let result = try Uchardet.detect(data)
         let charsetUpper = result.charset.uppercased()
         XCTAssertTrue(charsetUpper.contains("8859-7") || charsetUpper.contains("GREEK") || charsetUpper.contains("1253"),
                       "应检测为 ISO-8859-7 或 GREEK 或 Windows-1253，实际: \(result.charset)")
-        // 验证能解码（不要求与原文完全一致，因为 uchardet 可能返回兼容编码）
         XCTAssertNotNil(result.decode(data), "应能用检测到的编码解码")
     }
 
@@ -1604,10 +1517,7 @@ final class UchardetDeepCoverageTests: XCTestCase {
         guard let data = text.data(using: enc) else {
             throw XCTSkip("无法将俄语文本编码为 KOI8-R")
         }
-        guard let result = Uchardet.detect(data) else {
-            XCTFail("uchardet 未能检测到编码")
-            return
-        }
+        let result = try Uchardet.detect(data)
         let charsetUpper = result.charset.uppercased()
         XCTAssertTrue(charsetUpper.contains("KOI8") || charsetUpper.contains("1251") || charsetUpper.contains("8859-5"),
                       "应检测为 KOI8-R 或兼容 Cyrillic 编码，实际: \(result.charset)")
@@ -1615,16 +1525,11 @@ final class UchardetDeepCoverageTests: XCTestCase {
     }
 
     func test_e2e_iso8859_1_western() throws {
-        // ISO-8859-1 西欧语言端到端
         let text = String(repeating: "Héllo Wörld, café résumé naïve.", count: 10)
         guard let data = text.data(using: .isoLatin1) else {
             throw XCTSkip("无法将文本编码为 ISO-8859-1")
         }
-        guard let result = Uchardet.detect(data) else {
-            XCTFail("uchardet 未能检测到编码")
-            return
-        }
-        // uchardet 对 ISO-8859-1 可能返回 ISO-8859-1 或 WINDOWS-1252（兼容超集）
+        let result = try Uchardet.detect(data)
         let charsetUpper = result.charset.uppercased()
         XCTAssertTrue(charsetUpper.contains("8859-1") || charsetUpper.contains("1252") || charsetUpper.contains("LATIN"),
                       "应检测为 ISO-8859-1 或 WINDOWS-1252，实际: \(result.charset)")
@@ -1634,7 +1539,6 @@ final class UchardetDeepCoverageTests: XCTestCase {
     // MARK: 大 Data 解码性能
 
     func test_decode_largeData() {
-        // 验证 decode 对大数据量不崩溃且结果正确
         let text = String(repeating: "大数据量解码测试内容，UTF-8 编码。", count: 5000)
         let data = text.data(using: .utf8)!
         XCTAssertGreaterThan(data.count, 200_000, "测试数据应超过 200KB")

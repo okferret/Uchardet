@@ -71,7 +71,9 @@ install(
 
 add_subdirectory(src)
 add_subdirectory(doc)
-add_subdirectory(test)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test")
+    add_subdirectory(test)
+endif()
 
 ######## Exported targets
 

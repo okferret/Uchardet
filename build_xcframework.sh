@@ -27,10 +27,11 @@
 #   ./build_xcframework.sh
 #
 # 可选环境变量：
-#   BUILD_DIR      - 构建临时目录（默认：./build_xcframework_tmp）
-#   OUTPUT_DIR     - 输出目录（默认：./output）
-#   SKIP_PLATFORMS - 跳过的平台，逗号分隔（如：watchos,visionos）
-#   KEEP_BUILD_DIR - 设为 1 时保留临时构建目录
+#   BUILD_DIR             - 构建临时目录（默认：./build_xcframework_tmp）
+#   OUTPUT_DIR            - 输出目录（默认：./output）
+#   SKIP_PLATFORMS        - 跳过的平台，逗号分隔（如：watchos,visionos）
+#   KEEP_BUILD_DIR        - 设为 1 时保留临时构建目录
+#   UCHARDET_SKIP_UPDATE  - 设为 1 时跳过自动下载源码更新，使用本地现有源码
 # =============================================================================
 
 set -euo pipefail
@@ -59,6 +60,10 @@ OUTPUT_DIR="${OUTPUT_DIR:-${SCRIPT_DIR}/output}"
 XCFRAMEWORK_PATH="${OUTPUT_DIR}/uchardet.xcframework"
 SKIP_PLATFORMS="${SKIP_PLATFORMS:-}"
 
+# ── uchardet 上游配置 ─────────────────────────────────────────────────────────
+UCHARDET_GITLAB_API="https://gitlab.freedesktop.org/api/v4/projects/uchardet%2Fuchardet"
+UCHARDET_SKIP_UPDATE="${UCHARDET_SKIP_UPDATE:-0}"
+
 # ── 版本配置 ──────────────────────────────────────────────────────────────────
 IOS_DEPLOYMENT_TARGET="13.0"
 MACOS_DEPLOYMENT_TARGET="10.15"
@@ -67,6 +72,173 @@ WATCHOS_DEPLOYMENT_TARGET="6.0"
 VISIONOS_DEPLOYMENT_TARGET="1.0"
 # Mac Catalyst 最低版本：Xcode 16+ 的 clang 不支持 ios13.0-macabi，最低为 14.0
 MACCATALYST_DEPLOYMENT_TARGET="14.0"
+
+# ── 自动下载最新版本 uchardet 源码 ────────────────────────────────────────────
+# 通过 GitLab API 查询最新 tag，下载对应 tarball，
+# 解压后将源码同步到当前脚本所在目录（替换 src/、CMakeLists.txt 等）。
+#
+# 可通过环境变量控制：
+#   UCHARDET_SKIP_UPDATE=1   跳过更新，直接使用本地源码
+fetch_latest_uchardet() {
+    if [[ "${UCHARDET_SKIP_UPDATE}" == "1" ]]; then
+        log_warn "UCHARDET_SKIP_UPDATE=1，跳过源码更新，使用本地现有源码"
+        return 0
+    fi
+
+    log_step "获取最新版本 uchardet 源码"
+
+    # ── 检查网络工具 ──────────────────────────────────────────────────────────
+    local DOWNLOADER=""
+    if command -v curl &>/dev/null; then
+        DOWNLOADER="curl"
+    elif command -v wget &>/dev/null; then
+        DOWNLOADER="wget"
+    else
+        log_warn "未找到 curl 或 wget，跳过源码更新，使用本地现有源码"
+        return 0
+    fi
+
+    # ── 查询最新 tag ──────────────────────────────────────────────────────────
+    log_info "正在查询 GitLab 最新 tag..."
+    local TAGS_JSON=""
+    if [[ "${DOWNLOADER}" == "curl" ]]; then
+        TAGS_JSON=$(curl -fsSL \
+            --connect-timeout 15 \
+            --max-time 30 \
+            "${UCHARDET_GITLAB_API}/repository/tags?order_by=version&sort=desc&per_page=1" \
+            2>/dev/null) || true
+    else
+        TAGS_JSON=$(wget -qO- \
+            --timeout=30 \
+            "${UCHARDET_GITLAB_API}/repository/tags?order_by=version&sort=desc&per_page=1" \
+            2>/dev/null) || true
+    fi
+
+    if [[ -z "${TAGS_JSON}" ]]; then
+        log_warn "无法获取版本信息（网络不可用？），跳过源码更新，使用本地现有源码"
+        return 0
+    fi
+
+    # 从 JSON 中提取 tag name（格式示例：[{"name":"0.0.8",...}]）
+    local LATEST_TAG=""
+    LATEST_TAG=$(echo "${TAGS_JSON}" \
+        | grep -o '"name":"[^"]*"' \
+        | head -1 \
+        | sed 's/"name":"//;s/"//g') || true
+
+    if [[ -z "${LATEST_TAG}" ]]; then
+        log_warn "无法解析最新版本号，跳过源码更新，使用本地现有源码"
+        return 0
+    fi
+
+    log_info "最新版本: ${LATEST_TAG}"
+
+    # ── 读取本地当前版本 ──────────────────────────────────────────────────────
+    local LOCAL_VERSION=""
+    if [[ -f "${SCRIPT_DIR}/CMakeLists.txt" ]]; then
+        local VER_MAJOR VER_MINOR VER_REV
+        VER_MAJOR=$(grep 'UCHARDET_VERSION_MAJOR' "${SCRIPT_DIR}/CMakeLists.txt" \
+            | grep -o '[0-9]*' | head -1) || VER_MAJOR="0"
+        VER_MINOR=$(grep 'UCHARDET_VERSION_MINOR' "${SCRIPT_DIR}/CMakeLists.txt" \
+            | grep -o '[0-9]*' | head -1) || VER_MINOR="0"
+        VER_REV=$(grep 'UCHARDET_VERSION_REVISION' "${SCRIPT_DIR}/CMakeLists.txt" \
+            | grep -o '[0-9]*' | head -1) || VER_REV="0"
+        LOCAL_VERSION="${VER_MAJOR}.${VER_MINOR}.${VER_REV}"
+        log_info "本地版本: ${LOCAL_VERSION}"
+    else
+        log_info "本地版本: 未找到源码，将下载最新版本"
+    fi
+
+    if [[ -n "${LOCAL_VERSION}" && "${LOCAL_VERSION}" == "${LATEST_TAG}" ]]; then
+        log_success "本地源码已是最新版本 (${LATEST_TAG})，无需更新"
+        return 0
+    fi
+
+    # ── 下载 tarball ──────────────────────────────────────────────────────────
+    local TARBALL_URL="${UCHARDET_GITLAB_API}/repository/archive.tar.gz?sha=${LATEST_TAG}"
+    local DOWNLOAD_TMP="${BUILD_DIR}/uchardet_src_download"
+    local TARBALL_PATH="${DOWNLOAD_TMP}/uchardet-${LATEST_TAG}.tar.gz"
+
+    mkdir -p "${DOWNLOAD_TMP}"
+
+    log_info "正在下载 uchardet ${LATEST_TAG} ..."
+    if [[ "${DOWNLOADER}" == "curl" ]]; then
+        curl -fL \
+            --connect-timeout 30 \
+            --max-time 300 \
+            --progress-bar \
+            -o "${TARBALL_PATH}" \
+            "${TARBALL_URL}"
+    else
+        wget -O "${TARBALL_PATH}" \
+            --timeout=300 \
+            --show-progress \
+            "${TARBALL_URL}"
+    fi
+
+    if [[ ! -f "${TARBALL_PATH}" || ! -s "${TARBALL_PATH}" ]]; then
+        log_warn "下载失败，跳过源码更新，使用本地现有源码"
+        rm -rf "${DOWNLOAD_TMP}"
+        return 0
+    fi
+
+    log_success "下载完成: ${TARBALL_PATH}"
+
+    # ── 解压 ──────────────────────────────────────────────────────────────────
+    local EXTRACT_DIR="${DOWNLOAD_TMP}/extracted"
+    mkdir -p "${EXTRACT_DIR}"
+
+    log_info "正在解压..."
+    tar -xzf "${TARBALL_PATH}" -C "${EXTRACT_DIR}"
+
+    # GitLab archive 解压后目录名格式：uchardet-<tag>-<commit_sha>/
+    local SRC_ROOT
+    SRC_ROOT=$(find "${EXTRACT_DIR}" -maxdepth 1 -mindepth 1 -type d | head -1)
+
+    if [[ -z "${SRC_ROOT}" || ! -d "${SRC_ROOT}" ]]; then
+        log_warn "解压目录结构异常，跳过源码更新"
+        rm -rf "${DOWNLOAD_TMP}"
+        return 0
+    fi
+
+    log_info "解压目录: ${SRC_ROOT}"
+
+    # ── 同步源码到脚本目录 ────────────────────────────────────────────────────
+    # 需要同步的文件/目录列表（保留脚本本身、output、build 等）
+    local SYNC_ITEMS=(
+        "src"
+        "doc"
+        "CMakeLists.txt"
+        "uchardet-config.cmake.in"
+        "uchardet.pc.in"
+        "uchardet.doap"
+        "AUTHORS"
+        "COPYING"
+        "INSTALL"
+        "LICENSE"
+        "README.md"
+    )
+
+    log_info "正在同步源码到: ${SCRIPT_DIR}"
+    for item in "${SYNC_ITEMS[@]}"; do
+        local SRC_ITEM="${SRC_ROOT}/${item}"
+        local DST_ITEM="${SCRIPT_DIR}/${item}"
+
+        if [[ -e "${SRC_ITEM}" ]]; then
+            # 删除旧版本后复制新版本
+            rm -rf "${DST_ITEM}"
+            cp -R "${SRC_ITEM}" "${DST_ITEM}"
+            log_success "  已更新: ${item}"
+        else
+            log_warn "  上游不含: ${item}，跳过"
+        fi
+    done
+
+    # ── 清理下载临时文件 ──────────────────────────────────────────────────────
+    rm -rf "${DOWNLOAD_TMP}"
+
+    log_success "uchardet 源码已更新至 ${LATEST_TAG}"
+}
 
 # ── 工具检查 ──────────────────────────────────────────────────────────────────
 check_requirements() {
@@ -293,6 +465,7 @@ _build_single_arch() {
           -DBUILD_SHARED_LIBS=OFF \
           -DBUILD_STATIC=ON \
           -DCHECK_SSE2=OFF \
+          -DBUILD_TESTING=OFF \
           -DCMAKE_SYSTEM_NAME="${CMAKE_SYSTEM_NAME}" \
           -DCMAKE_C_FLAGS="${COMMON_FLAGS}" \
           -DCMAKE_CXX_FLAGS="${COMMON_FLAGS}" \
@@ -531,11 +704,14 @@ main() {
     local START_TIME
     START_TIME=$(date +%s)
 
-    check_requirements
-
-    # 创建构建目录
+    # 创建构建目录（fetch_latest_uchardet 需要 BUILD_DIR 存在）
     mkdir -p "${BUILD_DIR}"
     mkdir -p "${OUTPUT_DIR}"
+
+    # ── 自动下载最新版本源码 ───────────────────────────────────────────────────
+    fetch_latest_uchardet
+
+    check_requirements
 
     # ── iOS (arm64) ────────────────────────────────────────────────────────────
     build_platform \
@@ -657,10 +833,11 @@ case "${1:-}" in
                                visionos, visionos_simulator
 
 环境变量:
-  BUILD_DIR           临时构建目录（默认: ./build_xcframework_tmp）
-  OUTPUT_DIR          输出目录（默认: ./output）
-  SKIP_PLATFORMS      跳过的平台（逗号分隔）
-  KEEP_BUILD_DIR      设为 1 时保留临时构建目录
+  BUILD_DIR              临时构建目录（默认: ./build_xcframework_tmp）
+  OUTPUT_DIR             输出目录（默认: ./output）
+  SKIP_PLATFORMS         跳过的平台（逗号分隔）
+  KEEP_BUILD_DIR         设为 1 时保留临时构建目录
+  UCHARDET_SKIP_UPDATE   设为 1 时跳过自动下载源码更新，使用本地现有源码
 
 示例:
   # 完整构建

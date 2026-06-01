@@ -1,360 +1,323 @@
 # uchardet
 
-[uchardet](https://www.freedesktop.org/wiki/Software/uchardet/) 是一个字符编码检测库，能够对未知编码的字节序列进行分析，并自动推断其字符集。返回的编码名称与 [iconv](https://www.gnu.org/software/libiconv/) 兼容。
+[uchardet](https://www.freedesktop.org/wiki/Software/uchardet/) is an encoding detector library, which takes a sequence of bytes in an unknown character encoding without any additional information, and attempts to determine the encoding of the text. Returned encoding names are [iconv](https://www.gnu.org/software/libiconv/)-compatible.
 
-uchardet 最初是 Mozilla 通用字符集检测库（universalchardet）的 C 语言绑定，现已支持比原始实现更多的字符集，检测准确率也更高。
+uchardet started as a C language binding of the original C++ implementation of the universal charset detection library by Mozilla. It can now detect more charsets, and more reliably than the original implementation.
 
-本仓库将 uchardet C 库封装为 XCFramework，并提供一套符合 Swift 惯用风格的 API，支持在 Apple 全平台（macOS、iOS、tvOS、watchOS、visionOS）上进行字符编码检测。
+## Swift Package Manager
 
-## 支持的语言 / 编码
+This repository provides a Swift wrapper (`Uchardet`) around the uchardet C library, distributed as a Swift Package with a prebuilt XCFramework binary target.
 
-  * 国际通用（Unicode）
-    * UTF-8
-    * UTF-16BE / UTF-16LE
-    * UTF-32BE / UTF-32LE / X-ISO-10646-UCS-4-34121 / X-ISO-10646-UCS-4-21431
-  * 阿拉伯语
-    * ISO-8859-6
-    * WINDOWS-1256
-  * 保加利亚语
-    * ISO-8859-5
-    * WINDOWS-1251
-  * 中文
-    * ISO-2022-CN
-    * BIG5
-    * EUC-TW
-    * GB18030
-    * HZ-GB-2312
-  * 克罗地亚语
-    * ISO-8859-2
-    * ISO-8859-13
-    * ISO-8859-16
-    * Windows-1250
-    * IBM852
-    * MAC-CENTRALEUROPE
-  * 捷克语
-    * Windows-1250
-    * ISO-8859-2
-    * IBM852
-    * MAC-CENTRALEUROPE
-  * 丹麦语
-    * IBM865
-    * ISO-8859-1
-    * ISO-8859-15
-    * WINDOWS-1252
-  * 英语
-    * ASCII
-  * 世界语（Esperanto）
-    * ISO-8859-3
-  * 爱沙尼亚语
-    * ISO-8859-4
-    * ISO-8859-13
-    * Windows-1252
-    * Windows-1257
-  * 芬兰语
-    * ISO-8859-1
-    * ISO-8859-4
-    * ISO-8859-9
-    * ISO-8859-13
-    * ISO-8859-15
-    * WINDOWS-1252
-  * 法语
-    * ISO-8859-1
-    * ISO-8859-15
-    * WINDOWS-1252
-  * 德语
-    * ISO-8859-1
-    * WINDOWS-1252
-  * 希腊语
-    * ISO-8859-7
-    * WINDOWS-1253
-  * 希伯来语
-    * ISO-8859-8
-    * WINDOWS-1255
-  * 匈牙利语
-    * ISO-8859-2
-    * WINDOWS-1250
-  * 爱尔兰盖尔语
-    * ISO-8859-1
-    * ISO-8859-9
-    * ISO-8859-15
-    * WINDOWS-1252
-  * 意大利语
-    * ISO-8859-1
-    * ISO-8859-3
-    * ISO-8859-9
-    * ISO-8859-15
-    * WINDOWS-1252
-  * 日语
-    * ISO-2022-JP
-    * SHIFT_JIS
-    * EUC-JP
-  * 韩语
-    * ISO-2022-KR
-    * EUC-KR / UHC
-  * 立陶宛语
-    * ISO-8859-4
-    * ISO-8859-10
-    * ISO-8859-13
-  * 拉脱维亚语
-    * ISO-8859-4
-    * ISO-8859-10
-    * ISO-8859-13
-  * 马耳他语
-    * ISO-8859-3
-  * 挪威语
-    * IBM865
-    * ISO-8859-1
-    * ISO-8859-15
-    * WINDOWS-1252
-  * 波兰语
-    * ISO-8859-2
-    * ISO-8859-13
-    * ISO-8859-16
-    * Windows-1250
-    * IBM852
-    * MAC-CENTRALEUROPE
-  * 葡萄牙语
-    * ISO-8859-1
-    * ISO-8859-9
-    * ISO-8859-15
-    * WINDOWS-1252
-  * 罗马尼亚语
-    * ISO-8859-2
-    * ISO-8859-16
-    * Windows-1250
-    * IBM852
-  * 俄语
-    * ISO-8859-5
-    * KOI8-R
-    * WINDOWS-1251
-    * MAC-CYRILLIC
-    * IBM866
-    * IBM855
-  * 斯洛伐克语
-    * Windows-1250
-    * ISO-8859-2
-    * IBM852
-    * MAC-CENTRALEUROPE
-  * 斯洛文尼亚语
-    * ISO-8859-2
-    * ISO-8859-16
-    * Windows-1250
-    * IBM852
-    * MAC-CENTRALEUROPE
-  * 西班牙语
-    * ISO-8859-1
-    * ISO-8859-15
-    * WINDOWS-1252
-  * 瑞典语
-    * ISO-8859-1
-    * ISO-8859-4
-    * ISO-8859-9
-    * ISO-8859-15
-    * WINDOWS-1252
-  * 泰语
-    * TIS-620
-    * ISO-8859-11
-  * 土耳其语
-    * ISO-8859-3
-    * ISO-8859-9
-  * 越南语
-    * VISCII
-    * Windows-1258
-  * 其他
-    * WINDOWS-1252
+### Requirements
 
-## Swift Package
+- Swift 5.9+
+- Xcode 15+ / macOS 10.15+, iOS 13+, tvOS 13+, watchOS 6+, visionOS 1+
 
-### 系统要求
+> **Note:** When building from the command line, use `xcrun swift build` instead of `swift build` to ensure the Xcode toolchain is used and matches the SDK version.
 
-| 平台       | 最低版本 |
-|------------|---------|
-| macOS      | 10.15+  |
-| iOS        | 13.0+   |
-| tvOS       | 13.0+   |
-| watchOS    | 6.0+    |
-| visionOS   | 1.0+    |
+### Installation
 
-### 通过 Swift Package Manager 集成
+#### Swift Package Manager (Xcode)
 
-在 `Package.swift` 中添加依赖：
+Add the package to your project via **File → Add Package Dependencies…** and enter the repository URL.
+
+#### Swift Package Manager (Package.swift)
 
 ```swift
-// Package.swift
 dependencies: [
-    .package(url: "https://github.com/your-org/uchardet.git", from: "1.0.0"),
+    .package(url: "https://github.com/your-org/Uchardet.git", from: "1.0.0"),
 ],
 targets: [
     .target(
         name: "YourTarget",
-        dependencies: [
-            .product(name: "Uchardet", package: "uchardet"),
-        ]
+        dependencies: ["Uchardet"]
     ),
 ]
 ```
 
-也可以通过 Xcode 添加：**File → Add Package Dependencies…**，粘贴仓库地址并选择版本即可。
+### Building
 
----
+```bash
+# Use xcrun to ensure the Xcode toolchain is selected
+xcrun swift build
 
-## Swift 使用教程
-
-### 导入模块
-
-```swift
-import Uchardet
+# Run tests
+xcrun swift test
 ```
 
-### 1. 从 `Data` 一次性检测
+### Usage
 
-```swift
-import Foundation
-import Uchardet
-
-let bytes: [UInt8] = [0xE4, 0xB8, 0xAD, 0xE6, 0x96, 0x87]  // "中文" 的 UTF-8 字节
-let data = Data(bytes)
-
-// 检测字符集名称（iconv 兼容格式）
-if let charset = Uchardet.detect(data) {
-    print("检测到的字符集：", charset)  // "UTF-8"
-}
-
-// 检测为 String.Encoding
-if let encoding = Uchardet.detectEncoding(data) {
-    print("检测到的编码：", encoding)  // String.Encoding.utf8
-    let text = String(data: data, encoding: encoding)
-    print("解码文本：", text ?? "")
-}
-```
-
-### 2. 从 `String` 一次性检测
+#### Quick Detection
 
 ```swift
 import Uchardet
 
-let sample = "Héllo wörld"
-
-if let charset = Uchardet.detect(sample) {
-    print("字符集：", charset)
+// Detect encoding of Data
+let data: Data = ...
+if let result = Uchardet.detect(data) {
+    print(result.charset)   // e.g. "UTF-8", "GB18030", "SHIFT-JIS"
+    print(result.encoding)  // Optional(String.Encoding)
 }
 
-if let encoding = Uchardet.detectEncoding(sample) {
-    print("编码：", encoding)
-}
+// Detect encoding of a byte array
+let bytes: [UInt8] = ...
+let result = Uchardet.detect(bytes: bytes)
+
+// Detect encoding of a file (streaming, large-file friendly)
+let result = try Uchardet.detect(fileURL)
 ```
 
-### 3. 大文件流式检测（节省内存）
-
-对于大文件，推荐使用流式 API，仅采样文件头部数据，避免将整个文件加载到内存：
-
-```swift
-import Foundation
-import Uchardet
-
-let fileURL = URL(fileURLWithPath: "/path/to/file.txt")
-
-do {
-    // 检测字符集名称
-    if let charset = try Uchardet.detect(contentsOf: fileURL) {
-        print("文件字符集：", charset)
-    }
-
-    // 检测为 String.Encoding，并用检测到的编码读取文件内容
-    if let encoding = try Uchardet.detectEncoding(contentsOf: fileURL) {
-        print("文件编码：", encoding)
-        let text = try String(contentsOf: fileURL, encoding: encoding)
-        print("文件内容：", text)
-    }
-} catch {
-    print("错误：", error)
-}
-```
-
-可以自定义采样参数：
-
-```swift
-// 最多采样 128 KB，每次读取 8 KB
-let charset = try Uchardet.detect(
-    contentsOf: fileURL,
-    sampleSize: 131_072,
-    chunkSize: 8_192
-)
-```
-
-### 4. 从 `[UInt8]` 字节数组检测
+#### Detect and Decode
 
 ```swift
 import Uchardet
 
-let bytes: [UInt8] = [0xE4, 0xB8, 0xAD, 0xE6, 0x96, 0x87]  // "中文" 的 UTF-8 字节
+let data = try Data(contentsOf: someURL)
 
-// 检测字符集名称
-if let charset = Uchardet.detect(bytes: bytes) {
-    print("字符集：", charset)  // "UTF-8"
+if let result = Uchardet.detect(data), let text = result.decode(data) {
+    print(text)
 }
 
-// 检测为 String.Encoding
-if let encoding = Uchardet.detectEncoding(bytes: bytes) {
-    print("编码：", encoding)
+// With fallback encoding
+if let result = Uchardet.detect(data) {
+    let text = result.decode(data, fallbackEncoding: .utf8)
 }
 ```
 
-### 5. 增量（手动）检测
-
-当需要精细控制数据喂入时（例如处理网络数据流），可直接使用 `Uchardet` 类：
+#### Streaming (Manual Control)
 
 ```swift
 import Uchardet
 
 let detector = Uchardet()
 
-// 逐块喂入数据
-for chunk in receivedChunks {
-    let ok = detector.handleData(chunk)
-    if !ok {
-        // 底层 C API 报告错误，停止继续喂入
-        break
-    }
+// Feed data in chunks (chainable)
+detector.feed(chunk1).feed(chunk2)
+
+// Finalize and get result
+if let result = detector.finalize() {
+    print(result.charset)
 }
 
-// 通知检测器数据已结束
-detector.dataEnd()
-
-// 读取检测结果
-if let charset = detector.charset {
-    print("字符集：", charset)
-}
-if let encoding = detector.encoding {
-    print("编码：", encoding)
-}
-
-// 重置以复用检测器
+// Reset and reuse the instance
 detector.reset()
+detector.feed(newData)
+let result2 = detector.finalize()
 ```
 
-### 6. 将字符集名称转换为 `String.Encoding`
-
-`String.Encoding` 扩展可独立使用，无需经过检测流程：
+#### File Detection with Custom Sampling
 
 ```swift
 import Uchardet
 
-// 通过 iconv 兼容的字符集名称初始化
-if let encoding = String.Encoding(charsetName: "WINDOWS-1252") {
-    print(encoding)  // 对应 Windows-1252 的 String.Encoding
-}
+// Sample only the first 64 KB (default), with 4 KB chunks (default)
+let result = try Uchardet.detect(fileURL)
 
-if let encoding = String.Encoding(charsetName: "EUC-JP") {
-    let text = String(data: jpData, encoding: encoding)
-}
+// Custom sample size and chunk size
+let result = try Uchardet.detect(fileURL, sampleSize: 32_768, chunkSize: 8_192)
 ```
+
+### API Reference
+
+#### `DetectionResult`
+
+| Property / Method | Description |
+|---|---|
+| `charset: String` | iconv-compatible charset name returned by uchardet (e.g. `"UTF-8"`, `"GB18030"`) |
+| `encoding: String.Encoding?` | Corresponding `String.Encoding`; `nil` if not supported on Apple platforms |
+| `description: String` | Human-readable description, e.g. `"UTF-8 (Unicode (UTF-8))"` |
+| `decode(_ data: Data) -> String?` | Decode raw bytes using the detected encoding |
+| `decode(_ data: Data, fallbackEncoding:) -> String?` | Decode with a fallback encoding if the primary fails |
+
+#### `Uchardet`
+
+| Method | Description |
+|---|---|
+| `init()` | Create a new detector instance |
+| `feed(_ data: Data) -> Self` | Feed a chunk of data (chainable) |
+| `feed(_ bytes: [UInt8]) -> Self` | Feed a byte array (chainable) |
+| `finalize() -> DetectionResult?` | End input and return the detection result |
+| `reset()` | Reset the detector for reuse |
+| `static detect(_ data: Data) -> DetectionResult?` | One-shot detection from `Data` |
+| `static detect(bytes: [UInt8]) -> DetectionResult?` | One-shot detection from byte array |
+| `static detect(_ url: URL, sampleSize:, chunkSize:) throws -> DetectionResult?` | Streaming file detection |
+
+#### `String.Encoding` Extension
+
+```swift
+// Initialize from an iconv-compatible charset name (case-insensitive)
+let encoding = String.Encoding(charsetName: "GB18030")
+let encoding = String.Encoding(charsetName: "shift-jis")
+let encoding = String.Encoding(charsetName: "windows-1251")
+```
+
+### Thread Safety
+
+Individual `Uchardet` instances are **not thread-safe**. For concurrent detection, create a separate instance per task. The static convenience methods (`Uchardet.detect(...)`) each create their own instance internally and are safe to call concurrently.
 
 ---
 
-## 安装（C 库 / 命令行工具）
+## Supported Languages/Encodings
 
-### Debian / Ubuntu / Mint
+  * International (Unicode)
+    * UTF-8
+    * UTF-16BE / UTF-16LE
+    * UTF-32BE / UTF-32LE / X-ISO-10646-UCS-4-34121 / X-ISO-10646-UCS-4-21431
+  * Arabic
+    * ISO-8859-6
+    * WINDOWS-1256
+  * Bulgarian
+    * ISO-8859-5
+    * WINDOWS-1251
+  * Chinese
+    * ISO-2022-CN
+    * BIG5
+    * EUC-TW
+    * GB18030
+    * HZ-GB-2312
+  * Croatian:
+    * ISO-8859-2
+    * ISO-8859-13
+    * ISO-8859-16
+    * Windows-1250
+    * IBM852
+    * MAC-CENTRALEUROPE
+  * Czech
+    * Windows-1250
+    * ISO-8859-2
+    * IBM852
+    * MAC-CENTRALEUROPE
+  * Danish
+    * IBM865
+    * ISO-8859-1
+    * ISO-8859-15
+    * WINDOWS-1252
+  * English
+    * ASCII
+  * Esperanto
+    * ISO-8859-3
+  * Estonian
+    * ISO-8859-4
+    * ISO-8859-13
+    * ISO-8859-13
+    * Windows-1252
+    * Windows-1257
+  * Finnish
+    * ISO-8859-1
+    * ISO-8859-4
+    * ISO-8859-9
+    * ISO-8859-13
+    * ISO-8859-15
+    * WINDOWS-1252
+  * French
+    * ISO-8859-1
+    * ISO-8859-15
+    * WINDOWS-1252
+  * German
+    * ISO-8859-1
+    * WINDOWS-1252
+  * Greek
+    * ISO-8859-7
+    * WINDOWS-1253
+  * Hebrew
+    * ISO-8859-8
+    * WINDOWS-1255
+  * Hungarian:
+    * ISO-8859-2
+    * WINDOWS-1250
+  * Irish Gaelic
+    * ISO-8859-1
+    * ISO-8859-9
+    * ISO-8859-15
+    * WINDOWS-1252
+  * Italian
+    * ISO-8859-1
+    * ISO-8859-3
+    * ISO-8859-9
+    * ISO-8859-15
+    * WINDOWS-1252
+  * Japanese
+    * ISO-2022-JP
+    * SHIFT_JIS
+    * EUC-JP
+  * Korean
+    * ISO-2022-KR
+    * EUC-KR / UHC
+  * Lithuanian
+    * ISO-8859-4
+    * ISO-8859-10
+    * ISO-8859-13
+  * Latvian
+    * ISO-8859-4
+    * ISO-8859-10
+    * ISO-8859-13
+  * Maltese
+    * ISO-8859-3
+  * Norwegian
+    * IBM865
+    * ISO-8859-1
+    * ISO-8859-15
+    * WINDOWS-1252
+  * Polish:
+    * ISO-8859-2
+    * ISO-8859-13
+    * ISO-8859-16
+    * Windows-1250
+    * IBM852
+    * MAC-CENTRALEUROPE
+  * Portuguese
+    * ISO-8859-1
+    * ISO-8859-9
+    * ISO-8859-15
+    * WINDOWS-1252
+  * Romanian:
+    * ISO-8859-2
+    * ISO-8859-16
+    * Windows-1250
+    * IBM852
+  * Russian
+    * ISO-8859-5
+    * KOI8-R
+    * WINDOWS-1251
+    * MAC-CYRILLIC
+    * IBM866
+    * IBM855
+  * Slovak
+    * Windows-1250
+    * ISO-8859-2
+    * IBM852
+    * MAC-CENTRALEUROPE
+  * Slovene
+    * ISO-8859-2
+    * ISO-8859-16
+    * Windows-1250
+    * IBM852
+    * MAC-CENTRALEUROPE
+  * Spanish
+    * ISO-8859-1
+    * ISO-8859-15
+    * WINDOWS-1252
+  * Swedish
+    * ISO-8859-1
+    * ISO-8859-4
+    * ISO-8859-9
+    * ISO-8859-15
+    * WINDOWS-1252
+  * Thai
+    * TIS-620
+    * ISO-8859-11
+  * Turkish:
+    * ISO-8859-3
+    * ISO-8859-9
+  * Vietnamese:
+    * VISCII
+    * Windows-1258
+  * Others
+    * WINDOWS-1252
+
+## Installation (C Library)
+
+### Debian/Ubuntu/Mint
 
     apt-get install uchardet libuchardet-dev
 
@@ -370,40 +333,49 @@ if let encoding = String.Encoding(charsetName: "EUC-JP") {
 
     emerge uchardet
 
-### macOS
+### Mac
 
     brew install uchardet
-
-  或
+  
+  or
 
     port install uchardet
 
 ### Windows
 
-Fedora 和 Msys2 仓库提供了预编译的二进制包。此外，该库在 Windows 下也非常容易编译，可使用 [CMake Windows 安装包](https://cmake.org/download/) 配合 MinGW 或 MinGW-w64 进行构建（支持 32 位和 64 位 DLL）。
+Binary packages are provided in Fedora and Msys2 repositories. There may
+exist other pre-built packages but I am not aware of them.
+Nevertheless the library is very easily and quickly compilable under
+Windows as well, so finding a binary package is not necessary.
+Some did it successfully with the [CMake Windows
+installer](https://cmake.org/download/) and MinGW. It should be possible
+to use MinGW-w64 instead of MinGW, in particular to build both 32 and
+64-bit DLL libraries).
 
-该库也支持交叉编译（例如在 GNU/Linux 机器上为 Windows 构建，可借助 [crossroad](https://pypi.org/project/crossroad/)）。
+Note also that it is very easily cross-buildable (for instance from a
+GNU/Linux machine; [crossroad](https://pypi.org/project/crossroad/) may
+help, this is what we use in our CI).
 
-### 从源码构建
+### Build from source
 
-发布版本下载地址：
+Releases are available from:
 https://www.freedesktop.org/software/uchardet/releases/
 
-如需开发版本，克隆 Git 仓库：
+If you prefer a development version, clone the git repository:
 
     git clone https://gitlab.freedesktop.org/uchardet/uchardet.git
 
-源码浏览：https://gitlab.freedesktop.org/uchardet/uchardet
+The source can be browsed at: https://gitlab.freedesktop.org/uchardet/uchardet
 
     cmake .
     make
     make install
 
-### 通过 flatpak-builder 构建
+### Build with flatpak-builder
 
-在 Flatpak JSON 清单中添加如下 `modules` 片段：
+Here is a working "module" section to include in your Flatpak's json manifest:
 
-```json
+```
 "modules": [
     {
         "name": "uchardet",
@@ -419,22 +391,34 @@ https://www.freedesktop.org/software/uchardet/releases/
 ]
 ```
 
-### 通过 CMake 导出目标使用
+### Build with CMake exported targets
 
-uchardet 安装了标准的 pkg-config 文件，可被任何现代构建系统发现。如果你的项目也使用 CMake，可以通过导出目标来查找并链接 uchardet：
+uchardet installs a standard pkg-config file which will make it easily
+discoverable by any modern build system. Nevertheless if your project also uses
+CMake and you want to discover uchardet installation using CMake exported
+targets, you may find and link uchardet with:
 
-```cmake
+```
 project(sample LANGUAGES C)
-find_package(uchardet)
-if(uchardet_FOUND)
-  add_executable(sample sample.c)
-  target_link_libraries(sample PRIVATE uchardet::libuchardet)
-endif()
+find_package ( uchardet )
+if (uchardet_FOUND)
+  add_executable( sample sample.c )
+  target_link_libraries ( sample PRIVATE uchardet::libuchardet )
+endif ()
 ```
 
-> 推荐优先使用 `pkg-config` 方式发现库，因为它是通用标准，即使构建系统发生变化也能正常工作。
+Note though that we recommend the library discovery with `pkg-config` because it
+is standard and generic. Therefore it will always work, even if we decided to
+change our own build system (which is not planned right now, but may always
+happen). This is why we advise to use standard `pkg-config` discovery.
 
-## 命令行用法
+Some more CMake specificities may be found in the [commit
+message](https://gitlab.freedesktop.org/uchardet/uchardet/-/commit/d7dad549bd5a3442b92e861bcd2c5cda2adeea27)
+which implemented such support.
+
+## Usage (C Library)
+
+### Command Line
 
 ```
 uchardet Command Line Tool
@@ -447,62 +431,84 @@ Usage:
  uchardet [Options] [File]...
 
 Options:
- -v, --version         打印版本和构建信息
- -h, --help            打印帮助信息
+ -v, --version         Print version and build information.
+ -h, --help            Print this help.
 ```
 
-## C 库用法
+### Library
 
-参见 [uchardet.h](https://gitlab.freedesktop.org/uchardet/uchardet/-/blob/master/src/uchardet.h)
+See [uchardet.h](https://gitlab.freedesktop.org/uchardet/uchardet/-/blob/master/src/uchardet.h)
 
-## 历史
+## History
 
-如简介所述，uchardet 最初是 Mozilla 的项目，用于改善网页编码检测，曾是 Firefox 的一部分。如今大多数网站已明确声明编码，UTF-8 也已广泛普及，该功能已从 Firefox 中移除。
+As said in introduction, this was initially a project of Mozilla to
+allow better detection of page encodings, and it used to be part of
+Firefox. If not mistaken, this is not the case anymore (probably because
+nowadays most websites better announce their encoding, and also UTF-8 is
+much more widely spread).
 
-universalchardet 所使用的技术描述见：https://www-archive.mozilla.org/projects/intl/universalcharsetdetection
+Techniques used by universalchardet are described at https://www-archive.mozilla.org/projects/intl/universalcharsetdetection
 
-虽然代码已经历了大量变化，但核心思路依然保留——检测不仅依赖编码规则，更重要的是基于语言字符统计分析。
+It is to be noted that a lot has changed since the original code, yet
+the base concept is still around, basing detection not just on encoding
+rules, but importantly on analysis of character statistics in languages.
 
-Mozilla 的原始代码已难以找到，但应与本仓库的初始提交相差不远。
+Original code by Mozilla does not seem to be found anymore anywhere, but
+it's probably not too far from the initial commit of this repository.
 
-2011 年，BYVoid 将 Mozilla 代码提取并打包为独立库 `uchardet`，托管于个人仓库。2015 年起，Jehan 开始参与贡献，将输出标准化为 iconv 兼容格式，增加了多种编码/语言支持，并通过 Python 脚本利用维基百科文本作为语言统计来源，简化了新编码/语言支持的生成流程，随后成为共同维护者。2016 年，`uchardet` 成为 freedesktop 项目。
+Mozilla code was extracted and packaged into a standalone library under
+the name `uchardet` by BYVoid in 2011, in a personal repository.
+Starting 2015, I (i.e. Jehan) started contributing, "standardized"
+the output to be iconv-compatible, added various encoding/language
+support and streamlined generation of sources for new support of
+encoding/languages by using texts from Wikipedia as statistics source on
+languages through Python scripts. Then I soon became co-maintainer.
+In 2016, `uchardet` became a freedesktop project.
 
-## 相关项目
+## Related Projects
 
-以下项目部分为 `uchardet` 的绑定，部分为同一初始代码的分支，部分为其他语言的原生移植。此列表不完整，仅供参考，我们不跟踪这些项目的状态。
+Some of these are bindings of `uchardet`, others are forks of the same
+initial code, which has diverged over time, others are native port in
+other languages.
+This list is not exhaustive and only meant as point of interest. We
+don't follow the status for these projects.
 
-  * [R-uchardet](https://cran.r-project.org/package=uchardet) — CRAN 上的 R 语言绑定
-  * [python-chardet](https://github.com/chardet/chardet) — Python 移植版
-  * [ruby-rchardet](http://rubyforge.org/projects/chardet/) — Ruby 移植版
-  * [juniversalchardet](http://code.google.com/p/juniversalchardet/) — universalchardet 的 Java 移植版
-  * [jchardet](http://jchardet.sourceforge.net/) — chardet 的 Java 移植版
-  * [nuniversalchardet](http://code.google.com/p/nuniversalchardet/) — universalchardet 的 C# 移植版
-  * [nchardet](http://www.conceptdevelopment.net/Localization/NCharDet/) — chardet 的 C# 移植版
-  * [uchardet-enhanced](https://bitbucket.org/medoc/uchardet-enhanced) — mozilla universalchardet 的分支
-  * [rust-uchardet](https://github.com/emk/rust-uchardet) — uchardet 的 Rust 语言绑定
-  * [libchardet](https://github.com/Joungkyun/libchardet) — 另一个封装 Mozilla 代码的 C/C++ API
+  * [R-uchardet](https://cran.r-project.org/package=uchardet) R binding on CRAN
+  * [python-chardet](https://github.com/chardet/chardet) Python port
+  * [ruby-rchardet](http://rubyforge.org/projects/chardet/) Ruby port
+  * [juniversalchardet](http://code.google.com/p/juniversalchardet/) Java port of universalchardet
+  * [jchardet](http://jchardet.sourceforge.net/) Java port of chardet
+  * [nuniversalchardet](http://code.google.com/p/nuniversalchardet/) C# port of universalchardet
+  * [nchardet](http://www.conceptdevelopment.net/Localization/NCharDet/) C# port of chardet
+  * [uchardet-enhanced](https://bitbucket.org/medoc/uchardet-enhanced) A fork of mozilla universalchardet
+  * [rust-uchardet](https://github.com/emk/rust-uchardet) Rust language binding of uchardet
+  * [libchardet](https://github.com/Joungkyun/libchardet) Another C/C++ API wrapping Mozilla code.
 
-## 使用者
+## Used by
 
-* [mpv](https://mpv.io/) — 用于字幕编码检测
+* [mpv](https://mpv.io/) for subtitle detection
 * [Tepl](https://wiki.gnome.org/Projects/Tepl)
-* [Nextcloud iOS app](https://github.com/nextcloud/ios)
+* [Nextcloud IOS app](https://github.com/nextcloud/ios)
 * [Codelite](https://codelite.org)
 * [QtAV](https://www.qtav.org/)
 * …
 
-## 许可证
+## Licenses
 
 * [Mozilla Public License Version 1.1](http://www.mozilla.org/MPL/1.1/)
-* [GNU General Public License, version 2.0](http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html) 或更高版本
-* [GNU Lesser General Public License, version 2.1](http://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html) 或更高版本
+* [GNU General Public License, version 2.0](http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html) or later.
+* [GNU Lesser General Public License, version 2.1](http://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html) or later.
 
-完整许可证文本见 `COPYING` 文件。
+See the file `COPYING` for the complete text of these 3 licenses.
 
-## 行为准则
+## Code of Conduct
 
-`uchardet` 项目由 [freedesktop.org](https://www.freedesktop.org/) 托管，遵循其行为准则，即以尊重的态度对待所有人，并期望所有人同样如此。
+The `uchardet` project is hosted by [freedesktop.org](https://www.freedesktop.org/)
+and as such follows its code of conduct. In other words, it means we
+will treat anyone with respect and expect anyone to do the same.
 
-请阅读 [freedesktop.org 行为准则](https://www.freedesktop.org/wiki/CodeOfConduct)。
+Please read [freedesktop.org Code of Conduct](https://www.freedesktop.org/wiki/CodeOfConduct).
 
-如在 uchardet 项目中遇到任何不当行为问题，请联系维护者（Jehan）或提交 Bug 报告（如有需要可设为私密）。
+In case of any problem regarding abusive behavior in uchardet project,
+please contact the maintainer (Jehan) or create a bug report (possibly
+private if needed).

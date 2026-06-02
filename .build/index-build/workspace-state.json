@@ -2,7 +2,11 @@
   "object" : {
     "artifacts" : [
       {
-        "kind" : "xcframework",
+        "kind" : {
+          "xcframework" : {
+
+          }
+        },
         "packageRef" : {
           "identity" : "uchardet",
           "kind" : "root",

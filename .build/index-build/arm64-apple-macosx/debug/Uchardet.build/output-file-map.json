@@ -1,11 +1,12 @@
 {
   "": {
-    "swift-dependencies": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Uchardet.build/master.swiftdeps"
+    "swift-dependencies": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Uchardet.build/primary.swiftdeps"
   },
   "/Users/okferret/Developer/Projects/Uchardet/Sources/Uchardet/Uchardet.swift": {
     "dependencies": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Uchardet.build/Uchardet.d",
     "object": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Uchardet.build/Uchardet.swift.o",
     "swiftmodule": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Uchardet.build/Uchardet~partial.swiftmodule",
-    "swift-dependencies": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Uchardet.build/Uchardet.swiftdeps"
+    "swift-dependencies": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Uchardet.build/Uchardet.swiftdeps",
+    "diagnostics": "/Users/okferret/Developer/Projects/Uchardet/.build/index-build/arm64-apple-macosx/debug/Uchardet.build/Uchardet.dia"
   }
 }

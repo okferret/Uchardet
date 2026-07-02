@@ -56,7 +56,7 @@ private enum CFEnc {
 // MARK: - UchardetError
 
 /// uchardet 检测过程中可能抛出的错误
-public enum UchardetError: Error, CustomStringConvertible {
+public enum UchardetError: Error, CustomStringConvertible, LocalizedError {
 
     /// 数据为空或数据量不足，无法完成字符集检测
     case insufficientData
@@ -76,6 +76,14 @@ public enum UchardetError: Error, CustomStringConvertible {
         case .unsupportedEncoding(let charset):
             return "当前平台不支持该编码：\(charset)"
         }
+    }
+    
+    public var errorDescription: String? {
+        return description
+    }
+    
+    public var failureReason: String? {
+        return description
     }
 }
 
